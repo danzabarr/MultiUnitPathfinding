@@ -4,84 +4,7 @@ using UnityEngine;
 
 public class Voxel2D 
 {
-
-	public delegate bool VisitNode(Vector2Int block, int steps);
-
-	public static List<Vector2Int> Flood(Vector2Int start, int max, VisitNode callback)
-	{
-		return Flood(new List<Vector2Int>(){ start }, max, callback);
-	}
-
-	public static List<Vector2Int> Flood(List<Vector2Int> start, int max, VisitNode callback)
-	{
-		List<Vector2Int> visited = new List<Vector2Int>();
-		void Helper(Vector2Int start, int steps, int max, VisitNode callback)
-		{
-			if (max > -1 && steps >= max)
-				return;
-
-			if (visited.Contains(start))
-				return;
-
-			visited.Add(start);
-
-			if (callback(start, steps))
-				return;
-
-			steps++;
-
-			Helper(start + Vector2Int.right, steps, max, callback);
-			Helper(start + Vector2Int.left, steps, max, callback);
-			Helper(start + Vector2Int.up, steps, max, callback);
-			Helper(start + Vector2Int.down, steps, max, callback);
-		}
-
-		for (int i = 0; i < start.Count; i++)
-			Helper(start[i], 0, max, callback);
-
-		return visited;
-	}
-
-	public static List<Vector2Int> Flood(Vector2Int start, int max)
-	{
-		return Flood(start, max, (_, _) => false);
-	}
-
-	public delegate bool VisitIntersection(Vector2Int block, Vector2 intersection, Vector2 normal, float distance);
-
-	public static void Capsule(Vector2 p0, Vector2 p1, float radius, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
-	{
-		float maxDistance = (p1 - p0).magnitude;
-
-		int steps = Mathf.CeilToInt(maxDistance / voxelSize.magnitude);
-		List<Vector2Int> visited = new List<Vector2Int>();
-		for (float t = 0; t < 1; t += 1f / steps)
-		{
-			Vector2 p = Vector2.Lerp(p0, p1, t);
-			{
-				for (float x = -radius; x <= radius; x += voxelSize.x)
-				{
-					for (float y = -radius; y <= radius; y += voxelSize.y)
-					{
-						Vector2 offset = new Vector2(x, y);
-						Vector2 p2 = p + offset;
-						if ((p2 - p).magnitude <= radius)
-						{
-							Vector2Int block = Vector2Int.RoundToInt(p2 / voxelSize - voxelOffset);
-							if (visited.Contains(block))
-								continue;
-							visited.Add(block);
-							Vector2 intersection = p2;
-							Vector2 normal = (p2 - p).normalized;
-							float distance = (p2 - p).magnitude;
-							if (callback(block, intersection, normal, distance))
-								return;
-						}
-					}
-				}
-			}
-		}
-	}
+	public delegate bool VisitIntersection(Vector2Int node, Vector2 intersection, Vector2 normal, float distance);
 
 	public static bool Line(Vector2 p0, Vector2 p1, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
 	{
@@ -199,4 +122,37 @@ public class Voxel2D
 		return line;
 	}
 
+	public static void Capsule(Vector2 p0, Vector2 p1, float radius, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
+	{
+		float maxDistance = (p1 - p0).magnitude;
+
+		int steps = Mathf.CeilToInt(maxDistance / voxelSize.magnitude);
+		List<Vector2Int> visited = new List<Vector2Int>();
+		for (float t = 0; t < 1; t += 1f / steps)
+		{
+			Vector2 p = Vector2.Lerp(p0, p1, t);
+			{
+				for (float x = -radius; x <= radius; x += voxelSize.x)
+				{
+					for (float y = -radius; y <= radius; y += voxelSize.y)
+					{
+						Vector2 offset = new Vector2(x, y);
+						Vector2 p2 = p + offset;
+						if ((p2 - p).magnitude <= radius)
+						{
+							Vector2Int block = Vector2Int.RoundToInt(p2 / voxelSize - voxelOffset);
+							if (visited.Contains(block))
+								continue;
+							visited.Add(block);
+							Vector2 intersection = p2;
+							Vector2 normal = (p2 - p).normalized;
+							float distance = (p2 - p).magnitude;
+							if (callback(block, intersection, normal, distance))
+								return;
+						}
+					}
+				}
+			}
+		}
+	}
 }

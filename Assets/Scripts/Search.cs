@@ -177,6 +177,48 @@ public class Search
 			}
 		}
 	}
+
+	public delegate bool VisitNode(Vector2Int node, int steps);
+
+	public static List<Vector2Int> Flood(Vector2Int start, int max, VisitNode callback)
+	{
+		return Flood(new List<Vector2Int>() { start }, max, callback);
+	}
+
+	public static List<Vector2Int> Flood(List<Vector2Int> start, int max, VisitNode callback)
+	{
+		List<Vector2Int> visited = new List<Vector2Int>();
+		void Helper(Vector2Int start, int steps, int max, VisitNode callback)
+		{
+			if (max > -1 && steps >= max)
+				return;
+
+			if (visited.Contains(start))
+				return;
+
+			visited.Add(start);
+
+			if (callback(start, steps))
+				return;
+
+			steps++;
+
+			Helper(start + Vector2Int.right, steps, max, callback);
+			Helper(start + Vector2Int.left, steps, max, callback);
+			Helper(start + Vector2Int.up, steps, max, callback);
+			Helper(start + Vector2Int.down, steps, max, callback);
+		}
+
+		for (int i = 0; i < start.Count; i++)
+			Helper(start[i], 0, max, callback);
+
+		return visited;
+	}
+
+	public static List<Vector2Int> Flood(Vector2Int start, int max)
+	{
+		return Flood(start, max, (_, _) => false);
+	}
 }
 
 public class Tree<Node>

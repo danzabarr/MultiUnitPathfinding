@@ -6,7 +6,11 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter))]
 public class TerrainGenerator : MonoBehaviour
 {
+	public bool autoUpdate;
+
+	[Header("Mesh Settings")]
 	public UnityEngine.Rendering.IndexFormat indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+
 	private Mesh mesh;
 	private MeshFilter meshFilter;
 
@@ -14,7 +18,6 @@ public class TerrainGenerator : MonoBehaviour
 	private int[] triangles;
 	private Vector2[] uv;
 
-	public bool autoUpdate;
 
 	[ContextMenu("Regenerate Mesh")]
 	public virtual void RegenerateMesh()
@@ -27,7 +30,7 @@ public class TerrainGenerator : MonoBehaviour
 	}
 
 #if UNITY_EDITOR
-	void OnValidate()
+	public void OnValidate()
 	{
 		if (autoUpdate) ExecuteAfter(seconds: 0.01f, () => RegenerateMesh());
 	}
@@ -73,7 +76,6 @@ public class TerrainGenerator : MonoBehaviour
 		mesh.uv = uv;
 		mesh.triangles = triangles;
 		mesh.RecalculateBounds();
-		
 		mesh.RecalculateNormals();
 		meshFilter.mesh = mesh;
 	}
