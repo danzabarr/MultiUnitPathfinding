@@ -83,12 +83,12 @@ public class Voxel2D
 		}
 	}
 
-	public static void Line(Vector2 p0, Vector2 p1, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
+	public static bool Line(Vector2 p0, Vector2 p1, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
 	{
-		Ray(new Ray(p0, p1 - p0), (p1 - p0).magnitude, voxelSize, voxelOffset, callback);
+		return Ray(new Ray(p0, p1 - p0), (p1 - p0).magnitude, voxelSize, voxelOffset, callback);
 	}
 
-	public static void Ray(Ray ray, float maxDistance, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
+	public static bool Ray(Ray ray, float maxDistance, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
 	{
 		Vector2 p0 = ray.origin;
 		Vector2 p1 = ray.origin + ray.direction * maxDistance;
@@ -119,7 +119,6 @@ public class Voxel2D
 		Vector2 normal = t_max.x < t_max.y ? normalX : normalY;
 		float next_t = Mathf.Min(t_max.x, t_max.y);
 
-
 		int i = 0;
 		while (i < 1000)
 		{
@@ -129,7 +128,7 @@ public class Voxel2D
 			intersection = p0 + rd * next_t + voxelOffset * voxelSize;
 
 			if (callback(square, intersection, normal, next_t * maxDistance))
-				break;
+				return true;
 
 			if (t_max.x < t_max.y)
 			{
@@ -146,8 +145,10 @@ public class Voxel2D
 				normal = normalY;
 			}
 			if (next_t > 1f)
-				break;
+				return false;
 		}
+
+		return false;
 	}
 
 	public static List<Vector2Int> Line(Vector2 p0, Vector2 p1, Vector2 voxelSize, Vector2 voxelOffset)

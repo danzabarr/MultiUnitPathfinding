@@ -38,7 +38,7 @@ public class GridGraph : ScriptableObject, IGraph<Vector2Int>
 		set => this[p.x, p.y] = value;
 	}
 
-	public List<Vector2Int> Neighbours(Vector2Int current)
+	public IEnumerable<Vector2Int> Neighbours(Vector2Int current)
 
 	{
 		List<Vector2Int> neighbours = new List<Vector2Int>();

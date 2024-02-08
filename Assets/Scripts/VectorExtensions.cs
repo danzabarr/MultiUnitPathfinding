@@ -18,4 +18,11 @@ public static class VectorExtensions
 	{
 		return new Vector3(vector.x, 0, vector.y);
 	}
+
+	public static Vector3 X0Z(this Vector2Int vector)
+	{
+		return new Vector3(vector.x, 0, vector.y);
+	}
+
+
 }
