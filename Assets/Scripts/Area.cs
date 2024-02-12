@@ -133,7 +133,7 @@ public class Area
 		{
 			HashSet<IObstruction> visited = new HashSet<IObstruction>();
 
-			if (!Voxel2D.Line(node.tile, existing.tile, Vector2.one, -0.5f * Vector2.one, (n, steps) =>
+			if (Voxel2D.Line(node.tile, existing.tile, Vector2.one, -0.5f * Vector2.one, (n, steps) =>
 			{
 				if (!tiles.Contains(n))
 					return true;
