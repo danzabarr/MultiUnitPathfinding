@@ -172,7 +172,7 @@ namespace OLD
 		public bool HasLineOfSight(Vector2Int start, Vector2Int end)
 		{
 			bool hasLineOfSight = true;
-			Voxel2D.Line(start, end, Vector2.one, Vector2.one * -0.5f, (Vector2Int block, Vector2 intersection, Vector2 normal, float distance) =>
+			Voxel2D.Line(start, end, Vector2.one, Vector2.one * -0.5f, (Vector2Int block, Vector2 intersection, Vector2 normal, int steps, float distance) =>
 			{
 				if (values[block.x, block.y] == OBSTACLE)
 				{
@@ -393,10 +393,10 @@ namespace OLD
 				}
 			}
 
-			// The set of nodes already evaluated
+			// The collection of nodes already evaluated
 			List<Vector2Int> closedSet = new List<Vector2Int>();
 
-			// The set of currently discovered nodes that are not evaluated yet.
+			// The collection of currently discovered nodes that are not evaluated yet.
 			// Initially, only the start node is known.
 			List<Vector2Int> openSet = new List<Vector2Int>();
 			openSet.Add(start);
@@ -540,10 +540,10 @@ namespace OLD
 
 			foreach (Vector2Int goal in goals)
 			{
-				// The set of nodes already evaluated
+				// The collection of nodes already evaluated
 				List<Vector2Int> closedSet = new List<Vector2Int>();
 
-				// The set of currently discovered nodes that are not evaluated yet.
+				// The collection of currently discovered nodes that are not evaluated yet.
 				// Initially, only the start node is known.
 				List<Vector2Int> openSet = new List<Vector2Int>();
 				openSet.Add(goal);

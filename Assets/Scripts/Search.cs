@@ -1,7 +1,7 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static Search;
+using UnityEngine.Profiling;
 
 public class Search 
 {
@@ -9,75 +9,60 @@ public class Search
 
 	public static List<Node> AStar<Node>(Node start, Node goal, IGraph<Node> graph, BreakOn<Node> breakOn = null)
 	{
+		Profiler.BeginSample("AStar");
+
 		if (breakOn == null)
 			breakOn = (node, cost) => false;
-
-		List<Node> path = new List<Node>();
-
-		void ReconstructPath(Dictionary<Node, Node> cameFrom, Node current)
-		{
-			if (cameFrom.ContainsKey(current))
-				ReconstructPath(cameFrom, cameFrom[current]);
-			path.Add(current);
-		}
-
-		List<Node> closedSet = new List<Node>();
-		List<Node> openSet = new List<Node> { start };
-
-		// For each node, which node it can most efficiently be reached from.
-		// If a node can be reached from many nodes, cameFrom will eventually contain the
-		// most efficient previous step.
+		
 		Dictionary<Node, Node> parents = new Dictionary<Node, Node>();
 		Dictionary<Node, float> gScore = new Dictionary<Node, float>();
 		Dictionary<Node, float> fScore = new Dictionary<Node, float>();
 		
-		gScore[start] = 0;
-		
-		fScore[start] = graph.HeuristicCost(start, goal);
+		float GScore(Node node) => gScore.ContainsKey(node) ? gScore[node] : float.PositiveInfinity;
+		float FScore(Node node) => fScore.ContainsKey(node) ? fScore[node] : float.PositiveInfinity;
 
-		float GScore(Node node) => gScore.ContainsKey(node) ? gScore[node] : float.MaxValue;
-		float FScore(Node node) => fScore.ContainsKey(node) ? fScore[node] : float.MaxValue;
+		IComparer<Node> comparer = Comparer<Node>.Create((a, b) => FScore(a).CompareTo(FScore(b)));
+		PriorityQueue<Node> openSet = new PriorityQueue<Node>(comparer);
+		
+		gScore[start] = 0;
+		fScore[start] = graph.HeuristicCost(start, goal);
+		openSet.Enqueue(start);
 
 		while (openSet.Count > 0)
 		{
-			Node current = openSet[0];
-			for (int i = 1; i < openSet.Count; i++)
-				if (FScore(openSet[i]) < FScore(current))
-					current = openSet[i];
+			Node current = openSet.Dequeue();
 
 			if (current.Equals(goal) || breakOn(current, GScore(current))) // Goal reached or break condition met
 			{
-				ReconstructPath(parents, current);
+				List<Node> path = new List<Node>();
+
+				while (parents.ContainsKey(current))
+				{
+					path.Add(current);
+					current = parents[current];
+				}
+
+				path.Add(start);
 				return path;
 			}
 
-			openSet.Remove(current);
-			closedSet.Add(current);
-
 			foreach (Node neighbour in graph.Neighbours(current))
 			{
-				if (closedSet.Contains(neighbour))
-					continue; // Ignore the neighbor which is already evaluated.
+				float tentative_gScore = GScore(current) + graph.EdgeCost(current, neighbour);
 
-				
-				float tentative_gScore = GScore(current) + graph.EdgeCost(current, neighbour); // Add the edge cost to the neighbour
+				if (tentative_gScore < GScore(neighbour))
+				{
+					parents[neighbour] = current;
 
-				if (!openSet.Contains(neighbour)) // Discover a new node
-					openSet.Add(neighbour);
-
-				else if (tentative_gScore >= GScore(neighbour))
-					continue; // This is not a better path.
-
-				// This path is the best until now. Record it!
-				parents[neighbour] = current;
-				gScore[neighbour] = tentative_gScore;
-				
-				fScore[neighbour] = GScore(neighbour) + graph.HeuristicCost(neighbour, goal);
+					gScore[neighbour] = tentative_gScore;
+					fScore[neighbour] = tentative_gScore + graph.HeuristicCost(neighbour, goal);
+					
+					if (!openSet.Contains(neighbour))
+						openSet.Enqueue(neighbour);
+				}
 			}
 		}
-
-		// Open set is empty but goal was never reached
-		return path;
+		return null;
 	}
 
 	public static Tree<Node> AStarTree<Node>(Node start, List<Node> goals, IGraph<Node> graph)
@@ -167,6 +152,10 @@ public class Search
 			foreach (Node neighbour in graph.Neighbours(current))
 			{
 				float edgeCost = graph.EdgeCost(current, neighbour);
+
+				if (edgeCost == float.PositiveInfinity)
+					continue;
+
 				float newCost = cost + edgeCost;
 
 				if (!costs.ContainsKey(neighbour) || newCost < costs[neighbour])

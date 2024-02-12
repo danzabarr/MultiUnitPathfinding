@@ -4,12 +4,25 @@ using UnityEngine;
 
 public class Voxel2D 
 {
-	public delegate bool VisitIntersection(Vector2Int node, Vector2 intersection, Vector2 normal, float distance);
+	public delegate bool VisitIntersection(Vector2Int node, Vector2 intersection, Vector2 normal, int steps, float distance);
+
+	public delegate bool VisitNode(Vector2Int node, int steps);
+
+	public static bool Line(Vector2 p0, Vector2 p1, Vector2 voxelSize, Vector2 voxelOffset, VisitNode callback)
+	{
+		return Ray(new Ray(p0, p1 - p0), (p1 - p0).magnitude, voxelSize, voxelOffset, callback);
+	}
 
 	public static bool Line(Vector2 p0, Vector2 p1, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
 	{
 		return Ray(new Ray(p0, p1 - p0), (p1 - p0).magnitude, voxelSize, voxelOffset, callback);
 	}
+
+	public static bool Ray(Ray ray, float maxDistance, Vector2 voxelSize, Vector2 voxelOffset, VisitNode callback)
+	{
+		return Ray(ray, maxDistance, voxelSize, voxelOffset, (node, _, _, steps, _) => callback(node, steps));
+	}
+
 
 	public static bool Ray(Ray ray, float maxDistance, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
 	{
@@ -50,7 +63,7 @@ public class Voxel2D
 			square = Vector2Int.RoundToInt(p);
 			intersection = p0 + rd * next_t + voxelOffset * voxelSize;
 
-			if (callback(square, intersection, normal, next_t * maxDistance))
+			if (callback(square, intersection, normal, i, next_t * maxDistance))
 				return true;
 
 			if (t_max.x < t_max.y)
@@ -122,14 +135,23 @@ public class Voxel2D
 		return line;
 	}
 
-	public static void Capsule(Vector2 p0, Vector2 p1, float radius, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
+
+	public static bool Capsule(Vector2 p0, Vector2 p1, float radius, Vector2 voxelSize, Vector2 voxelOffset, VisitNode callback)
+	{
+		return Capsule(p0, p1, radius, voxelSize, voxelOffset, (node, _, _, steps, _) => callback(node, steps));
+	}
+
+	public static bool Capsule(Vector2 p0, Vector2 p1, float radius, Vector2 voxelSize, Vector2 voxelOffset, VisitIntersection callback)
 	{
 		float maxDistance = (p1 - p0).magnitude;
 
 		int steps = Mathf.CeilToInt(maxDistance / voxelSize.magnitude);
 		List<Vector2Int> visited = new List<Vector2Int>();
+
+		int i = 0;
 		for (float t = 0; t < 1; t += 1f / steps)
 		{
+
 			Vector2 p = Vector2.Lerp(p0, p1, t);
 			{
 				for (float x = -radius; x <= radius; x += voxelSize.x)
@@ -147,12 +169,13 @@ public class Voxel2D
 							Vector2 intersection = p2;
 							Vector2 normal = (p2 - p).normalized;
 							float distance = (p2 - p).magnitude;
-							if (callback(block, intersection, normal, distance))
-								return;
+							if (callback(block, intersection, normal, i++, distance))
+								return true;
 						}
 					}
 				}
 			}
 		}
+		return false;
 	}
 }

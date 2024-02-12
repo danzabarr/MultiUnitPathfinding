@@ -10,32 +10,59 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aed452f9dc54d2142b130d88b6954f9d, type: 3}
-  m_Name: Perlin Noise
+  m_Name: Rivers
   m_EditorClassIdentifier: 
-  seed: 0
-  amplitude: 38
+  seed: 123
+  amplitude: 64
   frequency: 0.02
-  octaves: 8
-  lacunarity: 2.87
-  persistence: 0.25
-  scale: 8
-  offset: -3
+  octaves: 3
+  lacunarity: 1.54
+  persistence: 0.31
+  scale: 1
+  offset: 0
   remap:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 1
       inSlope: 0
-      outSlope: 1
+      outSlope: 0
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
+      time: 0.45
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.5
+      value: 0
+      inSlope: -0.0012402404
+      outSlope: -0.0012402404
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.55
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
       time: 1
       value: 1
-      inSlope: 1
+      inSlope: 0
       outSlope: 0
       tangentMode: 0
       weightedMode: 0

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChocTerrainGenerator : TerrainGenerator
+public class ChocTerrainGenerator : AbstractTerrainGenerator
 {
 	[Range(1, 64)] public int size;
 	public int[] heights;
@@ -12,8 +12,10 @@ public class ChocTerrainGenerator : TerrainGenerator
 	public Function bevelSubdivisionDistribution = t => t;
 	public delegate float Function(float t);
 
-	public override void CreateArrays(out Vector3[] vertices, out int[] triangles, out Vector2[] uv)
+	public override void CreateArrays(out Vector3[] vertices, out int[] triangles, out Vector2[] uv, out Vector3[] normals)
 	{
+		normals = null;
+
 		size = Mathf.Max(1, size);
 
 		if (heights == null)
