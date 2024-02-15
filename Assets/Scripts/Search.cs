@@ -5,21 +5,23 @@ using UnityEngine.Profiling;
 
 public class Search 
 {
-	public delegate bool BreakOn<Node>(Node current, float cost);
+	public delegate bool BreakCondition<Node>(Node current, float cost);
 
-	public static List<Node> AStar<Node>(Node start, Node goal, IGraph<Node> graph, BreakOn<Node> breakOn = null)
+	public static List<Node> AStar<Node>(Node start, Node goal, IGraph<Node> graph, BreakCondition<Node> breakOn = null)
 	{
-		Profiler.BeginSample("AStar");
-
 		if (breakOn == null)
 			breakOn = (node, cost) => false;
-		
+
 		Dictionary<Node, Node> parents = new Dictionary<Node, Node>();
-		Dictionary<Node, float> gScore = new Dictionary<Node, float>();
-		Dictionary<Node, float> fScore = new Dictionary<Node, float>();
 		
-		float GScore(Node node) => gScore.ContainsKey(node) ? gScore[node] : float.PositiveInfinity;
-		float FScore(Node node) => fScore.ContainsKey(node) ? fScore[node] : float.PositiveInfinity;
+		Dictionary<Node, float> fScore = new Dictionary<Node, float>();
+		Dictionary<Node, float> gScore = new Dictionary<Node, float>();
+		
+		float GScore(Node node) 
+			=> gScore.GetValueOrDefault(node, float.PositiveInfinity);
+		
+		float FScore(Node node) 
+			=> fScore.GetValueOrDefault(node, float.PositiveInfinity);
 
 		IComparer<Node> comparer = Comparer<Node>.Create((a, b) => FScore(a).CompareTo(FScore(b)));
 		PriorityQueue<Node> openSet = new PriorityQueue<Node>(comparer);
@@ -28,23 +30,29 @@ public class Search
 		fScore[start] = graph.HeuristicCost(start, goal);
 		openSet.Enqueue(start);
 
+		List<Node> ReconstructPath(Node current)
+		{
+			List<Node> path = new List<Node>();
+
+			while (parents.ContainsKey(current))
+			{
+				path.Add(current);
+				current = parents[current];
+			}
+
+			path.Add(start);
+			path.Reverse();
+			return path;
+		}
+
 		while (openSet.Count > 0)
 		{
 			Node current = openSet.Dequeue();
 
 			if (current.Equals(goal) || breakOn(current, GScore(current))) // Goal reached or break condition met
-			{
-				List<Node> path = new List<Node>();
-
-				while (parents.ContainsKey(current))
-				{
-					path.Add(current);
-					current = parents[current];
-				}
-
-				path.Add(start);
-				return path;
-			}
+			{ 
+				return ReconstructPath(current);
+			}	
 
 			foreach (Node neighbour in graph.Neighbours(current))
 			{
@@ -100,7 +108,7 @@ public class Search
 	}
 
 	// TODO: Flood fill from multiple starts to a single goal, using a heuristic to select the path.
-	public static void FloodFill<Node>(List<Node> starts, Node goal, IGraph<Node> graph, BreakOn<Node> breakOn)
+	public static void FloodFill<Node>(List<Node> starts, Node goal, IGraph<Node> graph, BreakCondition<Node> breakOn)
 	{
 		Queue<Node> queue = new Queue<Node>();
 		foreach (Node start in starts)
@@ -132,7 +140,7 @@ public class Search
 		}
 	}
 
-	public static void FloodFill<Node>(Node start, IGraph<Node> graph, BreakOn<Node> breakOn)
+	public static void FloodFill<Node>(Node start, IGraph<Node> graph, BreakCondition<Node> breakOn)
 	{
 		Queue<Node> queue = new Queue<Node>();
 		queue.Enqueue(start);

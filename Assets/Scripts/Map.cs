@@ -36,6 +36,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 	[Header("Debugging")]
 	public Transform start;
+	public List<Transform> goals = new List<Transform>();
 	private Node tempStart;
 	public int connections = 0;
 
@@ -325,7 +326,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		return area.GetNode(x, z);
 	}
 
-	Node Temp(float x, float z)
+	Node TempStart(float x, float z)
 	{
 		Vector3 position = OnGround(x, z);
 		Vector2Int tile = WorldToTile(position);
@@ -334,11 +335,26 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 		Node temp = new Node(tile, position, areaID);
 
-
 		if (area != null)
 		foreach (Node node in area.Nodes)
 			if (IsVisible(new Vector2(x, z), node.tile))
 				temp.neighbours[node] = Vector3.Distance(position, node.position);
+
+		return temp;
+	}
+
+	Node TempEnd(float x, float z)
+	{
+		Vector3 position = OnGround(x, z);
+		Vector2Int tile = WorldToTile(position);
+		Area area = GetArea(tile.x, tile.y);
+		int areaID = area != null ? area.ID : -1;
+
+		Node temp = new Node(tile, position, areaID);
+		if (area != null)
+			foreach (Node node in area.Nodes)
+				if (IsVisible(node.tile, new Vector2(x, z)))
+					node.neighbours[temp] = Vector3.Distance(position, node.position);
 
 		return temp;
 	}
@@ -386,7 +402,8 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 		int increment = GetIncrement(tile);
 
-		if (increment < 0) return null;
+		if (increment < 0) 
+			return null;
 
 		return new Area(increment, area);
 	}
@@ -415,7 +432,6 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		return areas;
 	}
 
-
 	void IdentifyNodes(Area area)
 	{
 		foreach (Vector2Int tile in area.Tiles)
@@ -440,9 +456,9 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		}
 	}
 
+	// This can surely be shortened.
 	List<Ramp> IdentifyRamps(bool drawGizmos = false)
 	{
-		// This can surely be shortened.
 		List<Ramp> ramps = new List<Ramp>();
 		
 		foreach (Chunk chunk in chunks.Values)
@@ -468,8 +484,8 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 						if (!validSite)
 						{
 							int end = cx - 1;
-
 							int length = end - start + 1;
+							
 							if (length >= 3)
 							{
 								Vector2Int r00 = new Vector2Int(start + 1, cy);
@@ -506,6 +522,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 									Node n10 = null;
 									Node n11 = null;
+									
 									if (r00 != r10)
 									{
 										n10 = areaTop.AddNode(r10, p10);
@@ -527,6 +544,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 									ramps.Add(ramp);
 								}
 							}
+
 							start = -1;
 							incrementTop = -1;
 							incrementBottom = -1;
@@ -534,6 +552,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 					}
 					else
 					{
+						//horrible
 						bool validSite = !c00 && c01 && !c02 && Mathf.Abs(i00 - i02) == 1 && i00 >= 0 && i02 >= 0;
 						if (validSite)
 						{
@@ -564,6 +583,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 					if (start > -1)
 					{
+						// horrible
 						bool validSite = !c00 && c10 && !c20 && i00 == incrementLeft && i20 == incrementRight;
 						if (!validSite)
 						{
@@ -729,7 +749,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 	void OnDrawGizmos()
 	{
-		Node temp = Temp(start.position.x, start.position.z);
+		Node temp = TempStart(start.position.x, start.position.z);
 		Node goal = GetNode(mouseTile.x, mouseTile.y);
 
 		if (goal != null)
@@ -750,7 +770,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 			if (path != null)
 			{
 				float length = 0;
-				Node last = goal;
+				Node last = temp;
 				Gizmos.color = new Color(0f, 0f, 1f, 0.5f);
 				foreach (Node node in path)
 				{
@@ -765,6 +785,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 				Debug.Log("Path length: " + length);
 			}
 		}
+
 
 
 		for (int i = 0; i < areas.Count; i++)
@@ -790,6 +811,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 				}
 			}
 
+			//if (false)
 			if (drawNodes || drawEdges || GetNode(mouseTile.x, mouseTile.y) != null)
 			{
 				GUIStyle style = new GUIStyle();
