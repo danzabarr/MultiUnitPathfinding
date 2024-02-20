@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+//[System.Serializable]
 public class Obstructions : Dictionary<Node, int>
 {
 	public new int this[Node node]
@@ -27,13 +28,15 @@ public class Obstructions : Dictionary<Node, int>
 	}		
 }
 
+public class Neighbours : Dictionary<Node, float> { }
+
 [System.Serializable]
 public class Node
 {
 	public Vector2Int tile;
 	public Vector3 position;
 	public int area;
-	public Dictionary<Node, float> neighbours;
+	public Neighbours neighbours;
 	public Obstructions obstructions;
 
 	public static void Connect(Node a, Node b)
@@ -55,7 +58,7 @@ public class Node
 		this.position = position;
 		this.tile = tile;
 		this.area = area;
-		neighbours = new Dictionary<Node, float>();
+		neighbours = new Neighbours();
 	}
 
 	public bool IsNeighbour(Node other, out float cost)

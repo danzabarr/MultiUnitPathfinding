@@ -9,6 +9,12 @@ public class Search
 
 	public static List<Node> AStar<Node>(Node start, Node goal, IGraph<Node> graph, BreakCondition<Node> breakOn = null)
 	{
+		if (start == null || goal == null)
+			return null;
+
+		if (start.Equals(goal))
+			return new List<Node> { start };
+
 		if (breakOn == null)
 			breakOn = (node, cost) => false;
 

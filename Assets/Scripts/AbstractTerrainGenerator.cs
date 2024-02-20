@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshCollider))]
@@ -11,9 +12,9 @@ public abstract class AbstractTerrainGenerator : MonoBehaviour
 	[Header("Mesh Settings")]
 	public UnityEngine.Rendering.IndexFormat indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
-	private Mesh mesh;
-	private MeshFilter meshFilter;
-	private MeshCollider meshCollider;
+	protected Mesh mesh;
+	protected MeshFilter meshFilter;
+	protected MeshCollider meshCollider;
 
 	/// <summary>
 	/// Implement this.
@@ -22,6 +23,26 @@ public abstract class AbstractTerrainGenerator : MonoBehaviour
 	/// <param name="triangles"></param>
 	/// <param name="uv"></param>
 	public abstract void CreateArrays(out Vector3[] vertices, out int[] triangles, out Vector2[] uv, out Vector3[] normals);
+
+	public void UpdateVertices(List<Map.VertexUpdate> updates)
+	{
+		Vector3[] vertices = mesh.vertices;
+		foreach (var update in updates)
+			vertices[update.index] = update.position;
+		mesh.vertices = vertices;
+
+		FixTriangles();
+
+
+		mesh.RecalculateNormals();
+		mesh.RecalculateBounds();
+		meshFilter.mesh = mesh;
+		meshCollider.sharedMesh = mesh;
+	}
+
+	public virtual void FixTriangles()
+	{
+	}
 
 	public bool Raycast(Ray ray, out RaycastHit hit)
 	{

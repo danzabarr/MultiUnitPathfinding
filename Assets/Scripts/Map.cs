@@ -8,6 +8,9 @@ using static Search;
 using Color = UnityEngine.Color;
 using Random = UnityEngine.Random;
 
+[System.Serializable]
+public class Chunks : SerializableDictionary<Vector2Int, Chunk> { }
+
 [ExecuteInEditMode]
 public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSettings>
 {
@@ -33,9 +36,11 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 	public bool drawEdges;
 	public bool drawTiles;
 	public bool drawRamps;
+	public bool drawCliffs;
 
 	[Header("Debugging")]
 	public Transform start;
+	public Transform goal;
 	public List<Transform> goals = new List<Transform>();
 	private Node tempStart;
 	public int connections = 0;
@@ -43,7 +48,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 	[Header("Lists")]
 	[SerializeField] List<Area> areas = new List<Area>();
 	[SerializeField] List<Ramp> ramps = new List<Ramp>();
-	[SerializeField] Dictionary<Vector2Int, Chunk> chunks = new Dictionary<Vector2Int, Chunk>();
+	[SerializeField] Chunks chunks = new Chunks();
 	[SerializeField] HashSet<Vector2Int> riverTiles = new HashSet<Vector2Int>();
 	
 	[ContextMenu("Regenerate")]
@@ -68,11 +73,127 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 		// Ramps
 		ramps = IdentifyRamps();
+
+		SmoothRampVertices();
+		RemoveRampCliffs();
 		
 		// Count connections
 		connections = 0;
 		foreach (Area area in areas)
 			connections += area.CountConnections();
+	}
+
+	public struct VertexUpdate
+	{
+		public int index;
+		public Vector3 position;
+
+		public VertexUpdate(int index, Vector3 position)
+		{
+			this.index = index;
+			this.position = position;
+		}
+	}
+	void RemoveRampCliffs()
+	{
+		foreach (Ramp ramp in ramps)
+		{
+			Vector2Int V00 = ramp.start + (ramp.orientation == Orientation.HORIZONTAL ? Vector2Int.right : Vector2Int.up);
+			Vector2Int V11 = ramp.start + new Vector2Int(ramp.orientation == Orientation.HORIZONTAL ? ramp.length - 1 : 2, ramp.orientation == Orientation.VERTICAL ? ramp.length - 1 : 2);
+
+			Vector2Int v10 = new Vector2Int(V11.x, V00.y);
+			Vector2Int v01 = new Vector2Int(V00.x, V11.y);
+
+			//Area A00 = GetArea(V00.x, V00.y);
+			//Area A11 = GetArea(V11.x, V11.y);
+			//Area A10 = GetArea(v10.x, v10.y);
+			//Area A01 = GetArea(v01.x, v01.y);
+			//
+			//A00?.RemoveTile(V00.x, V00.y);
+			//A11?.RemoveTile(V11.x, V11.y);
+			//A10?.RemoveTile(v10.x, v10.y);
+			//A01?.RemoveTile(v01.x, v01.y);
+
+			for (int y = V00.y; y <= V11.y; y++)
+				for (int x = V00.x; x <= V11.x; x++)
+				{
+					int chunkX = x / chunkSize;
+					int chunkY = y / chunkSize;
+
+					Vector2Int localPosition = new Vector2Int(x, y) - new Vector2Int(chunkX * chunkSize, chunkY * chunkSize);
+
+					if (TryGetChunk(chunkX, chunkY, out Chunk chunk))
+					{
+						chunk.cliffs[localPosition.x + localPosition.y * chunkSize] = false;
+					}
+				}
+		}
+	}
+
+	void SmoothRampVertices(bool drawGizmos = false)
+	{
+		// Iterates over all the ramps and 
+		// raises or lowers the vertices to create a smooth gradient.
+		// A ramp is defined as a rectangle, and the vertices inside (but not on the edges) are smoothed.
+		// Ramps are either horizontal or vertical, and the vertices are smoothed in the direction of the ramp.
+
+		Dictionary<Chunk, List<VertexUpdate>> updates = new Dictionary<Chunk, List<VertexUpdate>>();
+
+		void AddUpdate(Chunk chunk, Vector2Int localPosition, float height)
+		{
+			if (!updates.TryGetValue(chunk, out List<VertexUpdate> list))
+			{
+				list = new List<VertexUpdate>();
+				updates[chunk] = list;
+			}
+
+			int index = localPosition.x + localPosition.y * (chunkSize + 1);
+			list.Add(new VertexUpdate(index, new Vector3(localPosition.x - 0.5f, height, localPosition.y - 0.5f)));
+		}
+
+		foreach (Ramp ramp in ramps)
+		{
+
+
+			Vector2Int V00 = ramp.start + Vector2Int.one;
+			Vector2Int V11 = ramp.start + new Vector2Int(ramp.orientation == Orientation.HORIZONTAL ? ramp.length : 2, ramp.orientation == Orientation.VERTICAL ? ramp.length : 2);
+
+			float height0 = ramp.n00.position.y;
+			float height1 = ramp.n01.position.y;
+
+			Gizmos.color = Color.red;
+			for (int y = V00.y; y <= V11.y; y++)
+			{
+
+				for (int x = V00.x; x <= V11.x; x++)
+				{
+					int chunkX = x / chunkSize;
+					int chunkY = y / chunkSize;
+
+					Vector2Int localPosition = new Vector2Int(x, y) - new Vector2Int(chunkX * chunkSize, chunkY * chunkSize);
+
+					float height = ramp.orientation != Orientation.HORIZONTAL ? Mathf.Lerp(height0, height1, (x - V00.x + 1) / (float)(V11.x - V00.x + 2)) : Mathf.Lerp(height0, height1, (y - V00.y + 1) / (float)(V11.y - V00.y + 2));
+					
+					if (drawGizmos)
+					{
+
+						Gizmos.DrawSphere(new Vector3(x - 0.5f, height, y - 0.5f), 0.1f);
+						Gizmos.color = Color.yellow;
+					}
+					else
+					if (TryGetChunk(chunkX, chunkY, out Chunk chunk))
+					{
+						AddUpdate(chunk, localPosition, height);
+					}
+
+				}
+			}
+
+		}
+
+		foreach (var (chunk, list) in updates)
+			chunk.UpdateVertices(list);
+	
 	}
 
 	[ContextMenu("Delete All")]
@@ -178,6 +299,8 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		return new Vector3(x, SampleHeight(x, z), z);
 	}
 
+	public Vector3 OnGround(Vector2Int tile) => OnGround(tile.x, tile.y);
+
 	public int GetIncrement(Vector2Int tile)
 	{
 		Vector2Int chunkCoord = TileToChunk(tile);
@@ -229,15 +352,22 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		new Vector2Int(-1, -1),
 		new Vector2Int(0, -1),
 		new Vector2Int(1, -1)
-	};
+	}; 
 
-	public bool IsVisible(Vector2 start, Vector2 end)
+	public bool IsVisible(Vector2 start, Vector2 end, bool allowInaccessibleStart = false, bool allowInaccessibleEnd = false)
 	{
 		if (start == end)
 			return true;
 
+
 		return !Voxel2D.Line(start, end, Vector2.one, -0.5f * Vector2.one, (node, steps) =>
 		{
+			if (node == start && allowInaccessibleStart)
+				return false;
+
+			if (node == end && allowInaccessibleEnd)
+				return false;
+
 			return !IsAccessible(node);
 		});
 	}
@@ -292,6 +422,19 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		return null;
 	}
 
+	public bool TryGetArea(int x, int y, out Area area)
+	{
+		area = null;
+		for (int i = 0; i < areas.Count; i++)
+			if (areas[i].Contains(x, y))
+			{
+				area = areas[i];
+				return true;
+			}
+
+		return false;
+	}
+
     void Start()
     {
 		Regenerate();
@@ -326,19 +469,49 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		return area.GetNode(x, z);
 	}
 
+	bool TryGetRamp(Vector2Int tile, out Ramp ramp)
+	{
+		foreach (Ramp r in ramps)
+			if (r.Contains(tile))
+			{
+				ramp = r;
+				return true;
+			}
+
+		ramp = null;
+		return false;
+	}
+
 	Node TempStart(float x, float z)
 	{
 		Vector3 position = OnGround(x, z);
 		Vector2Int tile = WorldToTile(position);
 		Area area = GetArea(tile.x, tile.y);
+
 		int areaID = area != null ? area.ID : -1;
 
 		Node temp = new Node(tile, position, areaID);
 
 		if (area != null)
-		foreach (Node node in area.Nodes)
-			if (IsVisible(new Vector2(x, z), node.tile))
+		{
+			foreach (Node node in area.Nodes)
+				if (IsVisible(new Vector2(x, z), node.tile, true, true))
+					temp.neighbours[node] = Vector3.Distance(position, node.position);
+		}
+
+		// we could be on a ramp
+		else if (TryGetRamp(tile, out Ramp ramp))
+		{
+			Debug.Log("On ramp");
+			foreach (Node node in ramp.Nodes)
 				temp.neighbours[node] = Vector3.Distance(position, node.position);
+		}
+
+		if (tempEnd != null)
+		{
+			if (IsVisible(temp.tile, tempEnd.tile, true, true))
+				temp.neighbours[tempEnd] = Vector3.Distance(temp.position, tempEnd.position);
+		}
 
 		return temp;
 	}
@@ -352,10 +525,11 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 		Node temp = new Node(tile, position, areaID);
 		if (area != null)
+		{
 			foreach (Node node in area.Nodes)
-				if (IsVisible(node.tile, new Vector2(x, z)))
+				if (IsVisible(node.tile, new Vector2(x, z), true, true))
 					node.neighbours[temp] = Vector3.Distance(position, node.position);
-
+		}
 		return temp;
 	}
 
@@ -456,6 +630,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		}
 	}
 
+
 	// This can surely be shortened.
 	List<Ramp> IdentifyRamps(bool drawGizmos = false)
 	{
@@ -518,6 +693,11 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 								{
 									Node n00 = areaTop.AddNode(r00, p00);
 									Node n01 = areaBottom.AddNode(r01, p01);
+
+									// Add the nodes to both areas!
+									areaBottom.AddNode(n00);
+									areaTop.AddNode(n01);
+
 									Node.Connect(n00, n01);
 
 									Node n10 = null;
@@ -527,6 +707,10 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 									{
 										n10 = areaTop.AddNode(r10, p10);
 										n11 = areaBottom.AddNode(r11, p11);
+
+										areaBottom.AddNode(n10);
+										areaTop.AddNode(n11);
+
 										Node.Connect(n10, n11);
 
 										Node.Connect(n00, n11);
@@ -622,6 +806,9 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 								{
 									Node n00 = areaLeft.AddNode(r00, p00);
 									Node n01 = areaRight.AddNode(r01, p01);
+									areaRight.AddNode(n00);
+									areaLeft.AddNode(n01);
+
 									Node.Connect(n00, n01);
 
 									Node n10 = null;
@@ -631,6 +818,9 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 									{
 										n10 = areaLeft.AddNode(r10, p10);
 										n11 = areaRight.AddNode(r11, p11);
+										areaRight.AddNode(n10);
+										areaLeft.AddNode(n11);
+
 										Node.Connect(n10, n11);
 										Node.Connect(n00, n11);
 										Node.Connect(n10, n01);
@@ -664,6 +854,12 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 					}
 				}
 			}
+		}
+
+
+		foreach (Ramp ramp in ramps)
+		{
+
 		}
 
 		return ramps;
@@ -706,12 +902,22 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 	Chunk GetOrCreateChunk(int x ,int y)
 	{
 		if (chunks == null)
-			chunks = new Dictionary<Vector2Int, Chunk>();
+			chunks = new Chunks();
 
 		if (chunks.TryGetValue(new Vector2Int(x, y), out Chunk get))
 			return get;
 
 		return CreateChunk(x, y);
+	}
+
+	bool TryGetChunk(int x, int y, out Chunk get)
+	{
+		get = null;
+
+		if (chunks == null)
+			return false;
+
+		return chunks.TryGetValue(new Vector2Int(x, y), out get);
 	}
 
 	Chunk CreateChunk(int x, int y)
@@ -747,45 +953,131 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		return Vector3.Distance(current.position, next.position);
 	}
 
+	Node tempEnd;
+
+	public bool RemoveNode(Node node)
+	{
+		if (node == null)
+			return false;
+
+		if (node.area < 0 || node.area >= areas.Count)
+			return false;
+
+		return areas[node.area].RemoveNode(node);
+	}
+
+	public bool TryGetArea(int id, out Area area)
+	{
+		area = null;
+		if (id < 0 || id >= areas.Count)
+			return false;
+
+		area = areas[id];
+		return true;
+	}
+
+
 	void OnDrawGizmos()
 	{
-		Node temp = TempStart(start.position.x, start.position.z);
-		Node goal = GetNode(mouseTile.x, mouseTile.y);
+		foreach (Chunk chunk in chunks.Values)
+			ScatterCliffDecos(chunk);
 
-		if (goal != null)
+		if (drawCliffs)
 		{
-			Gizmos.color = Color.green;
-			Gizmos.DrawSphere(goal.position, 0.5f);
-		}
-		Gizmos.color = Color.red;
-		Gizmos.DrawSphere(temp.position, 0.5f);
-
-		//foreach (Node neighbour in temp.Neighbours)
-		//	Gizmos.DrawLine(temp.position, neighbour.position);
-
-		if (temp != null && goal != null)
-		{
-			List<Node> path = AStar(temp, goal, this);
-
-			if (path != null)
+			Gizmos.color = Color.red;
+			foreach (Chunk chunk in chunks.Values)
 			{
-				float length = 0;
-				Node last = temp;
-				Gizmos.color = new Color(0f, 0f, 1f, 0.5f);
-				foreach (Node node in path)
-				{
-					length += Vector3.Distance(last.position, node.position);
-					Gizmos.DrawSphere(node.position, 0.5f);
-					Gizmos.DrawLine(last.position, node.position);
-					float cost = node.GetCost(last);
-					Handles.Label((last.position + node.position) / 2.0f, cost.ToString());
-					last = node;
-				}
-
-				Debug.Log("Path length: " + length);
+				for (int x = 0; x < chunkSize; x++)
+					for (int y = 0; y < chunkSize; y++)
+					{
+						Vector2Int tile = new Vector2Int(x, y) + chunk.chunkPosition * chunkSize;
+						if (IsCliff(tile))
+							Gizmos.DrawCube(OnGround(tile), Vector3.one);
+					}
 			}
 		}
 
+
+
+		if (start != null && goal != null)
+		{
+			RemoveNode(tempEnd);
+
+			tempEnd = TempEnd(goal.position.x, goal.position.z);
+			Node tempStart = TempStart(start.position.x, start.position.z);
+
+
+			List<Node> path = AStar(tempStart, tempEnd, this, (Node node, float cost) =>
+			{
+				if (IsVisible(node.position, tempEnd.position, true, true))
+					return true;
+				return false;
+			});
+
+			Gizmos.color = Color.blue;
+			
+			Gizmos.DrawSphere(tempStart.position, 0.5f);
+			Gizmos.DrawSphere(tempEnd.position, 0.5f);
+
+			for (int i = 0; i < path.Count - 1; i++)
+			{
+				Gizmos.DrawLine(path[i].position, path[i + 1].position);
+				Gizmos.DrawSphere(path[i].position, 0.5f);
+			}
+
+			//foreach (Node neighbour in tempStart.Neighbours)
+			//{
+			//	Gizmos.color = Color.red;
+			//	Gizmos.DrawLine(tempStart.position, neighbour.position);	
+			//}
+
+			
+			//if (TryGetArea(tempStart.area, out Area startArea))
+			//{
+			//	foreach (Node node in startArea.Nodes)
+			//		Gizmos.DrawSphere(node.position, 0.5f);
+			//}
+
+		}
+		if (false)
+		{
+			Node temp = TempStart(start.position.x, start.position.z);
+			Node goal = GetNode(mouseTile.x, mouseTile.y);
+
+			if (goal != null)
+			{
+				Gizmos.color = Color.green;
+				Gizmos.DrawSphere(goal.position, 0.5f);
+			}
+			Gizmos.color = Color.red;
+			Gizmos.DrawSphere(temp.position, 0.5f);
+
+			//foreach (Node neighbour in temp.Neighbours)
+			//	Gizmos.DrawLine(temp.position, neighbour.position);
+
+			if (temp != null && goal != null)
+			{
+				List<Node> path = AStar(temp, goal, this);
+
+				if (path != null)
+				{
+					float length = 0;
+					Node last = temp;
+					Gizmos.color = new Color(0f, 0f, 1f, 0.5f);
+					foreach (Node node in path)
+					{
+						length += Vector3.Distance(last.position, node.position);
+						Gizmos.DrawSphere(node.position, 0.5f);
+						Gizmos.DrawLine(last.position, node.position);
+						float cost = node.GetCost(last);
+						Handles.Label((last.position + node.position) / 2.0f, cost.ToString());
+						last = node;
+					}
+
+					Debug.Log("Path length: " + length);
+				}
+			}
+		}
 
 
 		for (int i = 0; i < areas.Count; i++)
@@ -863,6 +1155,40 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 
 			}
+
+			//SmoothRampVertices(true);
 		}
+	}
+
+	void ScatterCliffDecos(Chunk chunk)
+	{
+		Random.InitState(chunk.chunkPosition.x * 1000 + chunk.chunkPosition.y * 1000);
+		for (int x = 0; x < chunkSize; x++)
+			for (int y = 0; y < chunkSize; y++)
+			{
+				Vector2Int tile = new Vector2Int(x, y) + chunk.chunkPosition * chunkSize;
+				if (IsCliff(tile))
+				{
+					int number = Random.Range(5, 10);
+					int subGrid = 4;
+
+					HashSet<int> unique_indices = new HashSet<int>();
+					while (unique_indices.Count < number)
+						unique_indices.Add(Random.Range(0, subGrid * subGrid));
+
+					foreach (int index in unique_indices)
+					{
+						int i = index % subGrid;
+						int j = index / subGrid;
+
+						Vector3 position = OnGround(tile.x + (float)i / subGrid - 0.5f, tile.y + (float)j / subGrid - 0.5f);
+						//Instantiate(cliffDecoPrefab, position, Quaternion.identity);
+						Gizmos.DrawSphere(position + Vector3.up * 0.125f, 0.06125f);
+					}
+
+					//Instantiate(cliffDecoPrefab, position, Quaternion.identity);
+				}
+			}
+
 	}
 }

@@ -15,6 +15,7 @@ public class Area
 	public Dictionary<(Node, Node), HashSet<IObstruction>> obstructions;
 	public Dictionary<IObstruction, HashSet<(Node, Node)>> dependencies;
 	
+
 	public void AddObstruction(IObstruction obstruction)
 	{
 		HashSet<(Node, Node)> affectedEdges = new HashSet<(Node, Node)>();
@@ -74,9 +75,26 @@ public class Area
 		id = idCounter++;
 	}
 
+	public void RemoveTile(int x, int z)
+	{
+		tiles.Remove(new Vector2Int(x, z));
+	}
+
+
 	public Node GetNode(int x, int z)
 	{
 		return nodes.GetValueOrDefault(new Vector2Int(x, z));
+	}
+
+	public bool RemoveNode(Node node)
+	{
+		foreach (Node neighbour in node.Neighbours)
+			Node.Disconnect(node, neighbour);
+
+		if (nodes.TryGetValue(node.tile, out Node n) && n == node)
+			return nodes.Remove(node.tile);
+
+		return false;
 	}
 
 	public int CountConnections()
@@ -124,10 +142,16 @@ public class Area
 
 	public Node AddNode(Vector2Int tile, Vector3 position)
 	{
-		if (nodes.ContainsKey(tile))
-			return nodes[tile];
-
 		Node node = new Node(tile, position, id);
+		return AddNode(node);
+	}
+
+	public Node AddNode(Node node)
+	{
+		//if (nodes.ContainsKey(tile))
+		//	return nodes[tile];
+
+		//Node node = new Node(tile, position, id);
 
 		foreach (Node existing in nodes.Values)
 		{
@@ -155,8 +179,8 @@ public class Area
 			})) continue;
 
 			// from the existing node to the new node
-			Vector2Int new_dir = tile - existing.tile;
-			float new_cost = Vector2.Distance(tile, existing.tile);
+			Vector2Int new_dir = node.tile - existing.tile;
+			float new_cost = Vector2.Distance(node.tile, existing.tile);
 			bool abort = false;
 			
 			foreach (Node neighbour in existing.Neighbours)
@@ -196,7 +220,7 @@ public class Area
 			}
 		}
 
-		return nodes[tile] = node;
+		return nodes[node.tile] = node;
 	}
 
 	public int TileCount => tiles == null ? 0 : tiles.Count;

@@ -35,6 +35,75 @@ public class Chunk : AbstractTerrainGenerator
 		return cliffs[x + y * size.x];
 	}
 
+	public override void FixTriangles()
+	{
+		Vector3[] vertices = mesh.vertices;
+		int[] triangles = mesh.triangles;
+
+		for (int ti = 0, vi = 0, y = 0; y < size.y; y++, vi++)
+		{
+			for (int x = 0; x < size.x; x++, ti += 6, vi++)
+			{
+
+				float minHeight = Mathf.Min(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
+				float maxHeight = Mathf.Max(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
+				if (maxHeight - minHeight > 0.01f)
+				{
+					//cliffs[x + y * size.x] = true;
+					//increments[x + y * size.x] = -1;
+				}
+
+				if (snapIncrement > 0)
+				{
+					int increment = Mathf.RoundToInt(minHeight / snapIncrement);
+					increments[x + y * size.x] = increment;
+				}
+
+				// rotate the triangles so that the diagonal is shortest
+
+				Vector3 v00 = vertices[vi];
+				Vector3 v10 = vertices[vi + 1];
+				Vector3 v01 = vertices[vi + size.x + 1];
+				Vector3 v11 = vertices[vi + size.x + 2];
+
+				float d1 = (v00 - v11).sqrMagnitude;
+				float d2 = (v10 - v01).sqrMagnitude;
+
+				if (d1 > d2)
+				{
+					// |\
+					triangles[ti + 0] = vi;
+					triangles[ti + 1] = vi + size.x + 1;
+					triangles[ti + 2] = vi + 1;
+
+					// \|
+					triangles[ti + 3] = vi + 1;
+					triangles[ti + 4] = vi + size.x + 1;
+					triangles[ti + 5] = vi + size.x + 2;
+				}
+				else
+				{
+					// |/
+					triangles[ti + 0] = vi;
+					triangles[ti + 1] = vi + size.x + 2;
+					triangles[ti + 2] = vi + 1;
+
+					// /|
+					triangles[ti + 3] = vi;
+					triangles[ti + 4] = vi + size.x + 1;
+					triangles[ti + 5] = vi + size.x + 2;
+				}
+			}
+		}
+
+		mesh.vertices = vertices;
+		mesh.triangles = triangles;
+		mesh.RecalculateNormals();
+		mesh.RecalculateBounds();
+		meshFilter.mesh = mesh;
+		meshCollider.sharedMesh = mesh;
+	}
+
 	private void OnDrawGizmos()
 	{
 		if (true)
@@ -88,7 +157,6 @@ public class Chunk : AbstractTerrainGenerator
 				i++;
 			}
 		}
-
 
 		cliffs = new bool[size.x * size.y];
 		increments = new int[size.x * size.y];
