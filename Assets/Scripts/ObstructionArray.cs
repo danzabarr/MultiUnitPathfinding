@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class ObstacleArray : Obstacle
+public class ObstructionArray : AbstractObstruction
 {
 	public bool[] array;
 	public RectInt rect;
@@ -10,7 +10,7 @@ public class ObstacleArray : Obstacle
 		return rect;
 	}
 
-	public override bool IsObstructed(Vector2Int position)
+	public override bool Contains(Vector2Int position)
 	{
 		position -= new Vector2Int(rect.x, rect.y);
 		if (position.x < 0 || position.y < 0 || position.x >= rect.width || position.y >= rect.height)

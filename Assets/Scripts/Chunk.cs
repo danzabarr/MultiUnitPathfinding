@@ -4,24 +4,36 @@ using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
+/// <summary>
+/// A square grid plane terrain generator.
+/// Snaps vertices to increments and generates cliffs.
+/// </summary>
 public class Chunk : AbstractTerrainGenerator
 {
-	public delegate float Sample(float x, float z);
-	public Vector3 offset = new Vector3(-0.5f, 0, -0.5f);
+	public TerrainGenerationSettings terrainSettings;
 	public Vector2Int chunkPosition;
-	public float snapIncrement = 0f;
-	public float incrementSize = 1f;
-	public bool smoothShading = true;
 	public bool[] cliffs;
 	public int[] increments;
+	//TODO:
+	public bool smoothShading = true;
 
-	public Map Map => GetComponentInParent<Map>();
-	public Sample height => Map.SampleHeight;
-	public Vector2Int size => Map.chunkSize * Vector2Int.one;
+	private Vector2Int size => GetComponentInParent<Map>().chunkSize * Vector2Int.one;
 
 	public Vector3 OnGround(Vector3 position)
 	{
-		return new Vector3(position.x, height(position.x, position.z), position.z);
+		return new Vector3(position.x, terrainSettings.Sample(position.x, position.z), position.z);
+	}
+
+	public IEnumerable<Vector2Int> Tiles
+	{
+		get
+		{
+			for (int x = 0; x < size.x; x++)
+				for (int y = 0; y < size.y; y++)
+					yield return new Vector2Int(x, y) + chunkPosition * size;
+
+			yield break;
+		}
 	}
 
 	public bool IsCliff(int x, int y)
@@ -35,7 +47,7 @@ public class Chunk : AbstractTerrainGenerator
 		return cliffs[x + y * size.x];
 	}
 
-	public override void FixTriangles()
+	public override void OnVertexUpdate()
 	{
 		Vector3[] vertices = mesh.vertices;
 		int[] triangles = mesh.triangles;
@@ -53,9 +65,9 @@ public class Chunk : AbstractTerrainGenerator
 					//increments[x + y * size.x] = -1;
 				}
 
-				if (snapIncrement > 0)
+				if (terrainSettings.snapIncrement > 0)
 				{
-					int increment = Mathf.RoundToInt(minHeight / snapIncrement);
+					int increment = Mathf.RoundToInt(minHeight / terrainSettings.snapIncrement);
 					increments[x + y * size.x] = increment;
 				}
 
@@ -96,12 +108,10 @@ public class Chunk : AbstractTerrainGenerator
 			}
 		}
 
-		mesh.vertices = vertices;
 		mesh.triangles = triangles;
+
 		mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
-		meshFilter.mesh = mesh;
-		meshCollider.sharedMesh = mesh;
 	}
 
 	private void OnDrawGizmos()
@@ -152,7 +162,7 @@ public class Chunk : AbstractTerrainGenerator
 		{
 			for (int x = 0; x <= size.x; x++)
 			{
-				vertices[i] = OnGround(new Vector3(x + offset.x, 0, y + offset.z) + ChunkOffset) - ChunkOffset;
+				vertices[i] = OnGround(new Vector3(x + terrainSettings.offset.x, 0, y + terrainSettings.offset.z) + ChunkOffset) - ChunkOffset;
 				uv[i] = new Vector2((float)x / size.x, (float)y / size.y);
 				i++;
 			}
@@ -174,9 +184,9 @@ public class Chunk : AbstractTerrainGenerator
 					//increments[x + y * size.x] = -1;
 				}
 
-				if (snapIncrement > 0)
+				if (terrainSettings.snapIncrement > 0)
 				{
-					int increment = Mathf.RoundToInt(minHeight / snapIncrement);
+					int increment = Mathf.RoundToInt(minHeight / terrainSettings.snapIncrement);
 					increments[x + y * size.x] = increment;
 				}
 

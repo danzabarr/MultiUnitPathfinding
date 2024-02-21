@@ -5,73 +5,58 @@ using UnityEngine;
 
 public class Agent : MonoBehaviour
 {
-    private StateMachine state;
+	private List<Node> path = new List<Node>();
+	private Node current;
 
-    [SerializeField] private Transform followTarget;
-    [SerializeField] private Vector2 idleTether;
-    [SerializeField] private AgentTask task;
+	public float speed = 1;
+	public void PathTo(Node goal, IGraph<Node> graph)
+	{
+		path = Search.AStar(current, goal, graph, (_, _) => false);
+	}
 
-    private List<Node> path;
+	public void SetPath(List<Node> path)
+	{
+		this.path = path;
+	}
 
-    public StateMachine State => state == null ? state = GetComponent<StateMachine>() : state;
-    public Transform FollowTarget => followTarget;
-    public Vector2 IdleTether => idleTether;
-    public AgentTask Task => task;
+	public void Update()
+	{
+		if (HasPath)
+		{
+			Vector3 direction = (NextNode.position - transform.position).normalized;
+			transform.position += direction * speed * Time.deltaTime;
 
-    public void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            Follow(transform);
-        }
+			if (Vector3.Distance(transform.position, NextNode.position) < 0.1f)
+				current = Pop();
+		}
+	}
 
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            Wait();
-        }
-    }
+	public Node CurrentNode => current;
 
-    public void Follow(Transform followTarget)
-    {
-        if (followTarget == null)
-        {
-            Wait();
-            return;
-        }
+	public bool HasPath => path != null && path.Count > 0;
 
-        this.followTarget = followTarget;
-        EventBus.Trigger("Follow", state);
-        Debug.Log("Following");
-    }
+	public Node NextNode => HasPath ? path[0] : current;
 
-    public void Wait()
-    {
-        EventBus.Trigger("Wait", state);
-        Debug.Log("Waiting");
-    }
+	public Node Pop()
+	{
+		if (HasPath)
+		{
+			Node next = NextNode;
+			path.RemoveAt(0);
+			return next;
+		}
+		return current;
+	}
+	 
+	public void ClearPath()
+	{
+		path.Clear();
+	}
 
-    public void GoAndWait(Vector2 position)
-    {
-
-    }
-
-    public void Cancel()
-    {
-
-    }
-
-    public void Feed(int type, int amount)
-    {
-
-    }
-
-    public AgentTask LookForNeedSatisfyingTask()
-    {
-        return new AgentTask("Pick berries");
-    }
-
-    public AgentTask LookForPlayerTask()
-    {
-        return null;
-    }
+	public AgentTask LookForTask()
+	{
+		return null;
+	}
 }
+
+

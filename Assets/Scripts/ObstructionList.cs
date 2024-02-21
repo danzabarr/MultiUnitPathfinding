@@ -2,14 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObstacleList : ObstacleCollection<List<Vector2Int>>
+public class ObstructionList : AbstractObstructionCollection<List<Vector2Int>>
 {
-	public ObstacleList()
+	public ObstructionList()
 	{
 		collection = new List<Vector2Int>();
 	}
 
-	public ObstacleList(List<Vector2Int> list)
+	public ObstructionList(List<Vector2Int> list)
 	{
 		collection = list;
 		UpdateBoundingRectangle();

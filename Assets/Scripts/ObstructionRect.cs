@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class ObstacleRect : Obstacle
+public class ObstructionRect : AbstractObstruction
 {
 	public Vector2Int size;
 	public Vector2Int position;
@@ -10,7 +10,7 @@ public class ObstacleRect : Obstacle
 		return new RectInt(position.x, position.y, size.x, size.y);
 	}
 
-	public override bool IsObstructed(Vector2Int position)
+	public override bool Contains(Vector2Int position)
 	{
 		return GetBoundingRectangle().Contains(position);
 	}

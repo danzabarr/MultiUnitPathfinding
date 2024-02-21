@@ -15,7 +15,6 @@ public class Area
 	public Dictionary<(Node, Node), HashSet<IObstruction>> obstructions;
 	public Dictionary<IObstruction, HashSet<(Node, Node)>> dependencies;
 	
-
 	public void AddObstruction(IObstruction obstruction)
 	{
 		HashSet<(Node, Node)> affectedEdges = new HashSet<(Node, Node)>();
@@ -29,7 +28,7 @@ public class Area
 					if (!tiles.Contains(node))
 						return true;
 
-					if (obstruction.IsObstructed(node))
+					if (obstruction.Contains(node))
 					{
 						obstructed = true;
 						return true;
@@ -88,7 +87,8 @@ public class Area
 
 	public bool RemoveNode(Node node)
 	{
-		foreach (Node neighbour in node.Neighbours)
+		// Enumerate into a new list to avoid modifying the collection while iterating
+		foreach (Node neighbour in new List<Node>(node.Neighbours))
 			Node.Disconnect(node, neighbour);
 
 		if (nodes.TryGetValue(node.tile, out Node n) && n == node)
@@ -169,7 +169,7 @@ public class Area
 				//		if (visited.Contains(obstruction))
 				//			continue;
 				//
-				//		if (obstruction.IsObstructed(n))
+				//		if (obstruction.Contains(n))
 				//			visited.Add(obstruction);
 				//	}
 				//}

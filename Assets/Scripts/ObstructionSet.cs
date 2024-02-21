@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class ObstacleSet : ObstacleCollection<HashSet<Vector2Int>>
+public class ObstructionSet : AbstractObstructionCollection<HashSet<Vector2Int>>
 {
-	public ObstacleSet()
+	public ObstructionSet()
 	{
 		collection = new HashSet<Vector2Int>();
 	}
 
-	public ObstacleSet(HashSet<Vector2Int> set)
+	public ObstructionSet(HashSet<Vector2Int> set)
 	{
 		collection = set;
 		UpdateBoundingRectangle();

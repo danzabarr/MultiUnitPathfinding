@@ -8,16 +8,16 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         if (Input.GetKey(KeyCode.W))
-            transform.position += transform.forward.XZ().X0Z() * speed;
+            transform.position += transform.forward.XZ().X0Z() * speed * Time.deltaTime;
 
         if (Input.GetKey(KeyCode.S))
-            transform.position -= transform.forward.XZ().X0Z() * speed;
+            transform.position -= transform.forward.XZ().X0Z() * speed * Time.deltaTime;
 
         if (Input.GetKey(KeyCode.A))
-            transform.position -= transform.right.XZ().X0Z() * speed;
+            transform.position -= transform.right.XZ().X0Z() * speed * Time.deltaTime;
 
         if (Input.GetKey(KeyCode.D))
-            transform.position += transform.right.XZ().X0Z() * speed;
+            transform.position += transform.right.XZ().X0Z() * speed * Time.deltaTime;
 
         if (Input.GetKeyDown(KeyCode.Q))
         {

@@ -1,75 +1,69 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+/// <summary>
+/// The obstruction interface.
+/// </summary>
 public interface IObstruction
 {
 	RectInt GetBoundingRectangle();
-	bool IsObstructed(Vector2Int position);
+	bool Contains(Vector2Int position);
 }
 
-public class Obstruction : IObstruction 
+/// <summary>
+/// The abstract obstruction class that extends MonoBehaviour.
+/// </summary>
+public abstract class AbstractObstruction : MonoBehaviour, IObstruction
 {
-	private Vector2Int position;
-
-	public Obstruction(Vector2Int position)
-	{
-		this.position = position;
-	}
-
-	public RectInt GetBoundingRectangle()
-	{
-		return new RectInt(position.x, position.y, 1, 1);
-	}
-
-	public bool IsObstructed(Vector2Int position)
-	{
-		return this.position == position;
-	}
+	public abstract RectInt GetBoundingRectangle();
+	public abstract bool Contains(Vector2Int position);
 }
 
-public class ObstructionSet : IObstruction
+/// <summary>
+/// Version of previous type for collections.
+/// </summary>
+/// <typeparam name="Collection"></typeparam>
+public abstract class AbstractObstructionCollection<Collection> : AbstractObstruction where Collection : ICollection<Vector2Int>
 {
-	private HashSet<Vector2Int> set;
-	private RectInt boundingRectangle;
-	public ObstructionSet(HashSet<Vector2Int> set)
+	[SerializeField] protected Collection collection = default;
+	[SerializeField] protected RectInt boundingRectangle = new RectInt();
+
+	public virtual void Add(Vector2Int position)
 	{
-		this.set = set;
+		collection.Add(position);
 		UpdateBoundingRectangle();
 	}
 
-	public void Add(Vector2Int position)
+	public virtual void Remove(Vector2Int position)
 	{
-		set.Add(position);
+		collection.Remove(position);
 		UpdateBoundingRectangle();
 	}
 
-	public void Remove(Vector2Int position)
+	public virtual void AddRange(IEnumerable<Vector2Int> list)
 	{
-		set.Remove(position);
+		foreach (Vector2Int position in list)
+			collection.Add(position);
 		UpdateBoundingRectangle();
 	}
 
-	public void AddRange(IEnumerable<Vector2Int> list)
+	public virtual void RemoveRange(IEnumerable<Vector2Int> list)
 	{
-		set.UnionWith(list);
+		foreach (Vector2Int position in list)
+			collection.Remove(position);
+
 		UpdateBoundingRectangle();
 	}
 
-	public void RemoveRange(IEnumerable<Vector2Int> list)
-	{
-		set.ExceptWith(list);
-		UpdateBoundingRectangle();
-	}
-
-	public void UpdateBoundingRectangle()
+	public virtual void UpdateBoundingRectangle()
 	{
 		int minX = int.MaxValue;
 		int minY = int.MaxValue;
 		int maxX = int.MinValue;
 		int maxY = int.MinValue;
 
-		foreach (Vector2Int position in set)
+		foreach (Vector2Int position in collection)
 		{
 			if (position.x < minX)
 			{
@@ -92,53 +86,66 @@ public class ObstructionSet : IObstruction
 		boundingRectangle = new RectInt(minX, minY, maxX - minX + 1, maxY - minY + 1);
 	}
 
-	public RectInt GetBoundingRectangle()
+	public override RectInt GetBoundingRectangle()
 	{
 		return boundingRectangle;
 	}
 
-	public bool IsObstructed(Vector2Int position)
+	public override bool Contains(Vector2Int position)
 	{
-		return set.Contains(position);
+		return boundingRectangle.Contains(position) && collection.Contains(position);
+	}
+
+	public void OnValidate()
+	{
+		UpdateBoundingRectangle();
+	}
+
+	public virtual void OnDrawGizmosSelected()
+	{
+		Gizmos.color = Color.green;
+		foreach (Vector2Int position in collection)
+			Gizmos.DrawWireCube(position.X0Z(), Vector3.one);
+
+		//Gizmos.color = new Color(1f, 0f, 0f, 0.5f);
+		//foreach (Vector2Int position in collection)
+		//	Gizmos.DrawCube(position.X0Z(), Vector3.one);
 	}
 }
 
-public class ObstructionArray : IObstruction
+/// <summary>
+/// An obstruction component.
+/// This component obstructs a single tile position.
+/// See other obstruction components
+/// ObstructionList
+/// ObstructionRect
+/// ObstructionArray
+/// 
+/// </summary>
+public class Obstruction : AbstractObstruction
 {
-	private bool[,] array;
+	public Vector2Int position;
 
-	public ObstructionArray(bool[,] map)
+	public override RectInt GetBoundingRectangle()
 	{
-		this.array = map;
+		return new RectInt(position.x, position.y, 1, 1);
 	}
 
-	public RectInt GetBoundingRectangle()
+	public override bool Contains(Vector2Int position)
 	{
-		return new RectInt(0, 0, array.GetLength(0), array.GetLength(1));
+		return this.position == position;
 	}
 
-	public bool IsObstructed(Vector2Int position)
+	public void OnDrawGizmos()
 	{
-		return array[position.x, position.y];
-	}
-}
+		RectInt rect = GetBoundingRectangle();
+		Vector3 center = new Vector3(rect.x + rect.width / 2, 0, rect.y + rect.height / 2);
+		Vector3 size = new Vector3(rect.width, 1, rect.height);
 
-public class ObstructionRect : IObstruction
-{
-	private RectInt boundingRectangle;
+		Gizmos.color = Color.green;
+		Gizmos.DrawWireCube(center, size);
 
-	public ObstructionRect(RectInt boundingRectangle)
-	{
-		this.boundingRectangle = boundingRectangle;
-	}
-
-	public RectInt GetBoundingRectangle()
-	{
-		return boundingRectangle;
-	}
-
-	public bool IsObstructed(Vector2Int position)
-	{
-		return boundingRectangle.Contains(position);
+		//Gizmos.color = new Color(1f, 0f, 0f, 0.5f);
+		//Gizmos.DrawCube(center, size);
 	}
 }
