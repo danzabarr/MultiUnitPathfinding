@@ -7,6 +7,7 @@ using UnityEngine;
 /// <summary>
 /// A square grid plane terrain generator.
 /// Snaps vertices to increments and generates cliffs.
+/// Chunks store arrays of tile data, for example accessibility and altitude increments.
 /// </summary>
 public class Chunk : AbstractTerrainGenerator
 {
@@ -14,6 +15,18 @@ public class Chunk : AbstractTerrainGenerator
 	public Vector2Int chunkPosition;
 	public bool[] cliffs;
 	public int[] increments;
+
+	/*
+	 
+	 A tile can be:
+	- A flat area (with a height increment and area ID)
+	- A ramp (this is a cliff tile made accessible by a ramp, it is between two areas)
+	- A cliff (a tile between two flat areas, is has no area ID)
+	- A ramp corner (this is an accessible tile made inaccessible by a ramp, it belongs to an area)
+	- A node
+	- A ramp node
+	 */
+
 	//TODO:
 	public bool smoothShading = true;
 

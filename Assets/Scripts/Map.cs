@@ -9,9 +9,9 @@ using Color = UnityEngine.Color;
 using Random = UnityEngine.Random;
 
 /// <summary>
-/// This file is long but needs to be, because comprises generation and .
-/// Map generation uses chunks.
-/// Navigation uses areas and nodes.
+/// This file is long but needs to be.
+/// Map generation and other spatial stuff where a square is better uses chunks.
+/// Navigation uses areas, ramps and nodes.
 /// </summary>
 
 [ExecuteInEditMode]
@@ -28,6 +28,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 	[SerializeField] List<Area> areas = new List<Area>();
 	[SerializeField] List<Ramp> ramps = new List<Ramp>();
 	[SerializeField] List<AbstractObstruction> obstructions = new List<AbstractObstruction>();
+	[SerializeField] SerializableDictionary<Node, SerializableDictionary<Node, float>> adjacency;
 
 	[Header("Mouse")]
 	public Vector2Int mouseTile;
@@ -242,25 +243,145 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		return area.GetNode(x, z);
 	}
 
-	public bool RemoveNode(Node node)
+	bool RemoveNode(Node node)
 	{
 		if (node == null)
 			return false;
 
+	
+		// Enumerate into a new list to avoid modifying the collection while iterating
+		foreach (Node neighbour in new List<Node>(Neighbours(node)))
+			Disconnect(node, neighbour);
+
 		if (TryGetArea(node.area, out Area area))
-			return area.RemoveNode(node);
+			area.RemoveNode(node);
 
 		return false;
 	}
 
+	static bool Codirectional(Vector2Int a, Vector2Int b)
+	{
+		// Check if either vector is the zero vector
+		if (a == Vector2Int.zero || b == Vector2Int.zero)
+			return false;
+
+		// Direct comparison for equality
+		if (a == b)
+			return true;
+
+		// Handling cases where one of b's components is zero
+		if (b.x == 0 || b.y == 0)
+		{
+			// If both components of b are zero, a must also be zero for them to be codirectional (already checked)
+			// If only one component of b is zero, the corresponding component of a must also be zero, and check the other component for positive integer multiple
+			if ((b.x == 0 && a.x != 0) || (b.y == 0 && a.y != 0))
+				return false;
+
+			// Check the non-zero component for being a positive integer multiple
+			int nonZeroComponentRatio = (b.x == 0) ? a.y / b.y : a.x / b.x;
+			return nonZeroComponentRatio > 0 && ((b.x == 0) ? a.y % b.y == 0 : a.x % b.x == 0);
+		}
+
+		// Ensuring both components of b are non-zero, check for integer multiple and same direction
+		if (a.x % b.x != 0 || a.y % b.y != 0)
+			return false;
+
+		int xRatio = a.x / b.x;
+		int yRatio = a.y / b.y;
+
+		return xRatio == yRatio && xRatio > 0;
+	}
+
+	Node AddNode(Vector2Int tile, Vector3 position, Area area)
+	{
+		Node node = new Node(tile, position, area.ID);
+		return AddNode(node, area);
+	}
+
+	Node AddNode(Node node, Area area)
+	{
+		//if (nodes.ContainsKey(tile))
+		//	return nodes[tile];
+
+		//Node node = new Node(tile, position, id);
+
+		foreach (Node existing in area.Nodes)
+		{
+			HashSet<IObstruction> visited = new HashSet<IObstruction>();
+
+			if (Voxel2D.Line(node.tile, existing.tile, Vector2.one, -0.5f * Vector2.one, (n, steps) =>
+			{
+				if (!area.Contains(n.x, n.y))
+					return true;
+
+				//if (obstructions.TryGetValue((node, existing), out HashSet<IObstruction> set))
+				//{
+				//	foreach (IObstruction obstruction in set)
+				//	{
+				//		if (visited.Contains(obstruction))
+				//			continue;
+				//
+				//		if (obstruction.Contains(n))
+				//			visited.Add(obstruction);
+				//	}
+				//}
+
+				return false;
+
+			})) continue;
+
+			// from the existing node to the new node
+			Vector2Int new_dir = node.tile - existing.tile;
+			float new_cost = Vector2.Distance(node.tile, existing.tile);
+			bool abort = false;
+
+			foreach (Node neighbour in Neighbours(existing))
+			{
+				// from the existing node to its neighbour
+				Vector2Int old_dir = neighbour.tile - existing.tile;
+
+				// If the existing node already has a codirectional neighbour
+				if (Codirectional(new_dir, old_dir))
+				{
+					float old_cost = Vector2.Distance(neighbour.tile, existing.tile);
+					// If the new node is closer to the neighbour, then disconnect the existing node from the neighbour
+					if (new_cost < old_cost)
+						Disconnect(existing, neighbour);
+
+					// If the new node is further from the neighbour, then skip adding the new node
+					else
+					{
+						abort = true;
+						break;
+					}
+				}
+			}
+
+			if (abort)
+				continue;
+
+			Connect(existing, node);
+		}
+
+		area.AddNode(node);
+		return node;
+	}
+
 	public IEnumerable<Node> Neighbours(Node current)
 	{
-		return current.neighbours.Keys;
+		if (adjacency.TryGetValue(current, out SerializableDictionary<Node, float> dictionary))
+			return dictionary.Keys;
+
+		return new List<Node>();
+		//return current.neighbours.Keys;
 	}
 
 	public float EdgeCost(Node current, Node next)
 	{
-		return current.GetCost(next);
+		if (adjacency.TryGetValue(current, out SerializableDictionary<Node, float> dictionary))
+			return dictionary.GetValueOrDefault(next, float.PositiveInfinity);
+		
+		return float.PositiveInfinity;
 	}
 
 	public float HeuristicCost(Node current, Node next)
@@ -307,6 +428,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 			return !IsAccessible(node);
 		});
 	}
+
 	bool TryGetRamp(Vector2Int tile, out Ramp ramp)
 	{
 		foreach (Ramp r in ramps)
@@ -319,6 +441,36 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 		ramp = null;
 		return false;
 	}
+
+	void SetAdjacency(Node from, Node to, float cost)
+	{
+		SerializableDictionary<Node, float> dictionary;
+		if (!adjacency.TryGetValue(from, out dictionary))
+		{
+			dictionary = new SerializableDictionary<Node, float>();
+			adjacency[from] = dictionary;
+		}
+		dictionary[to] = cost;
+	}
+
+	void Connect(Node a, Node b)
+	{
+		float cost = Vector3.Distance(a.position, b.position);
+		SetAdjacency(a, b, cost);
+		SetAdjacency(b, a, cost);
+	}
+
+	void Disconnect(Node a, Node b)
+	{
+		SerializableDictionary<Node, float> dictionary;
+
+		if (adjacency.TryGetValue(a, out dictionary))
+			dictionary.Remove(b);
+
+		if (adjacency.TryGetValue(b, out dictionary))
+			dictionary.Remove(a);
+	}
+
 	/// <summary>
 	/// Runs the A* algorithm to find a path between start and goal.
 	/// </summary>
@@ -327,8 +479,6 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 	/// <returns></returns>
 	public List<Node> AStar(Vector3 start, Vector3 goal)
 	{
-		
-
 		Node TempStart(float x, float z, Node tempEnd = null)
 		{
 			Vector3 position = OnGround(x, z);
@@ -343,7 +493,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 			{
 				foreach (Node node in area.Nodes)
 					if (IsVisible(new Vector2(x, z), node.tile, true, true))
-						temp.neighbours[node] = Vector3.Distance(position, node.position);
+						SetAdjacency(temp, node, Vector3.Distance(position, node.position));
 			}
 
 			// we could be on a ramp
@@ -351,13 +501,13 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 			{
 				Debug.Log("On ramp");
 				foreach (Node node in ramp.Nodes)
-					temp.neighbours[node] = Vector3.Distance(position, node.position);
+					SetAdjacency(temp, node, Vector3.Distance(position, node.position));
 			}
 
 			if (tempEnd != null)
 			{
 				if (IsVisible(temp.tile, tempEnd.tile, true, true))
-					temp.neighbours[tempEnd] = Vector3.Distance(temp.position, tempEnd.position);
+					SetAdjacency(temp, tempEnd, Vector3.Distance(position, tempEnd.position));
 			}
 
 			return temp;
@@ -375,7 +525,8 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 			{
 				foreach (Node node in area.Nodes)
 					if (IsVisible(node.tile, new Vector2(x, z), true, true))
-						node.neighbours[temp] = Vector3.Distance(position, node.position);
+						SetAdjacency(temp, node, Vector3.Distance(position, node.position));
+							//node.neighbours[temp] = Vector3.Distance(position, node.position);
 			}
 			return temp;
 		}
@@ -451,8 +602,6 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 		return false;
 	}
-
-	
 
 	void ScatterCliffDecos(Chunk chunk)
 	{
@@ -546,33 +695,33 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 								}
 								else
 								{
-									Node n00 = areaTop.AddNode(r00, p00);
-									Node n01 = areaBottom.AddNode(r01, p01);
+									Node n00 = AddNode(r00, p00, areaTop);
+									Node n01 = AddNode(r01, p01, areaBottom);
 
 									// Add the nodes to both areas!
 									//areaBottom.AddNode(n00);
 									//areaTop.AddNode(n01);
 
-									Node.Connect(n00, n01);
+									Connect(n00, n01);
 
 									Node n10 = null;
 									Node n11 = null;
 
 									if (r00 != r10)
 									{
-										n10 = areaTop.AddNode(r10, p10);
-										n11 = areaBottom.AddNode(r11, p11);
+										n10 = AddNode(r10, p10, areaTop);
+										n11 = AddNode(r11, p11, areaBottom);
 
 										// Add the nodes to both areas!
 										//areaBottom.AddNode(n10);
 										//areaTop.AddNode(n11);
 
 										// Connect other end
-										Node.Connect(n10, n11);
+										Connect(n10, n11);
 										
 										// Connect diagonals
-										Node.Connect(n00, n11);
-										Node.Connect(n10, n01);
+										Connect(n00, n11);
+										Connect(n10, n01);
 									}
 
 									Ramp ramp = new Ramp();
@@ -662,26 +811,26 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 								}
 								else
 								{
-									Node n00 = areaLeft.AddNode(r00, p00);
-									Node n01 = areaRight.AddNode(r01, p01);
+									Node n00 = AddNode(r00, p00, areaLeft);
+									Node n01 = AddNode(r01, p01, areaRight);
 									//areaRight.AddNode(n00);
 									//areaLeft.AddNode(n01);
 
-									Node.Connect(n00, n01);
+									Connect(n00, n01);
 
 									Node n10 = null;
 									Node n11 = null;
 
 									if (r00 != r10)
 									{
-										n10 = areaLeft.AddNode(r10, p10);
-										n11 = areaRight.AddNode(r11, p11);
+										n10 = AddNode(r10, p10, areaLeft);
+										n11 = AddNode(r11, p11, areaRight);
 										//areaRight.AddNode(n10);
 										//areaLeft.AddNode(n11);
 
-										Node.Connect(n10, n11);
-										Node.Connect(n00, n11);
-										Node.Connect(n10, n01);
+										Connect(n10, n11);
+										Connect(n00, n11);
+										Connect(n10, n01);
 									}
 
 									Ramp ramp = new Ramp();
@@ -911,7 +1060,7 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 				if (area.Contains(v1.x, v1.y))
 					continue;
 
-				area.AddNode(tile, OnGround(tile.x, tile.y));
+				AddNode(tile, OnGround(tile.x, tile.y), area);
 			}
 		}
 	}
@@ -1022,15 +1171,21 @@ public class Map : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSetting
 
 						if (drawEdges || node.tile == mouseTile)
 						{
-							foreach (Node neighbour in node.Neighbours)
+							foreach (var pair in adjacency)
 							{
-								Gizmos.color = new Color(0f, 0f, 0f, 0.25f);
-								Gizmos.DrawLine(node.position, neighbour.position);
-								Gizmos.color = Color.red;
-								Gizmos.DrawSphere(neighbour.position, 0.5f);
-								float cost = node.GetCost(neighbour);
-
-								Handles.Label((node.position + neighbour.position) / 2.0f, cost.ToString(), style);
+								Node n = pair.Key;
+								SerializableDictionary<Node, float> dictionary = pair.Value;
+								foreach (var pair2 in dictionary)
+								{
+									Node n2 = pair2.Key;
+									float cost = pair2.Value;
+									if (n == node)
+									{
+										Gizmos.color = Color.red;
+										Gizmos.DrawLine(n.position, n2.position);
+										Handles.Label((n.position + n2.position) / 2.0f, cost.ToString(), style);
+									}
+								}
 							}
 						}
 					}
