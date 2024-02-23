@@ -8,26 +8,26 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         if (Input.GetKey(KeyCode.W))
-            transform.position += transform.forward.XZ().X0Z() * speed * Time.deltaTime;
+            transform.position += transform.forward.XZ().X0Y() * speed * Time.deltaTime;
 
         if (Input.GetKey(KeyCode.S))
-            transform.position -= transform.forward.XZ().X0Z() * speed * Time.deltaTime;
+            transform.position -= transform.forward.XZ().X0Y() * speed * Time.deltaTime;
 
         if (Input.GetKey(KeyCode.A))
-            transform.position -= transform.right.XZ().X0Z() * speed * Time.deltaTime;
+            transform.position -= transform.right.XZ().X0Y() * speed * Time.deltaTime;
 
         if (Input.GetKey(KeyCode.D))
-            transform.position += transform.right.XZ().X0Z() * speed * Time.deltaTime;
+            transform.position += transform.right.XZ().X0Y() * speed * Time.deltaTime;
 
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            Vector3 target = transform.position - transform.forward.XZ().X0Z() * transform.position.y / transform.forward.y;
+            Vector3 target = transform.position - transform.forward.XZ().X0Y() * transform.position.y / transform.forward.y;
             transform.RotateAround(target, Vector3.up, Mathf.RoundToInt(transform.eulerAngles.y / 45) * 45 + 45 - transform.eulerAngles.y);
         }
 
         if (Input.GetKeyDown(KeyCode.E))
         {
-			Vector3 target = transform.position - transform.forward.XZ().X0Z() * transform.position.y / transform.forward.y;
+			Vector3 target = transform.position - transform.forward.XZ().X0Y() * transform.position.y / transform.forward.y;
 			transform.RotateAround(target, Vector3.up, Mathf.RoundToInt(transform.eulerAngles.y / 45) * 45 - 45 - transform.eulerAngles.y);
 		}
 

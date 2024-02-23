@@ -3,7 +3,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
-/// Areas are just collections of connected tiles, and a set of the nodes within that area.
+/// Areas are collections of connected tiles, and a set of nodes.
 /// They are useful for doing navigation.
 /// </summary>
 [System.Serializable]
@@ -13,13 +13,18 @@ public class Area
 
 	[SerializeField] private int id;
 	[SerializeField] private int increment;
-	[SerializeField] private HashSet<Vector2Int> tiles;
+	[SerializeField] private SerializableHashSet<Vector2Int> tiles;
 	[SerializeField] private SerializableDictionary<Vector2Int, Node> nodes;
-	
+	[SerializeField] private List<Ramp> ramps;
+
+	[SerializeField] private SerializableDictionary<(Ramp, Ramp), List<Node>> interconnections;
+	// List or ramp to ramp interconnections
+	// This could be used for saving longer paths
+
 	public Area(int increment, ICollection<Vector2Int> tiles)
 	{
 		this.increment = increment;
-		this.tiles = new HashSet<Vector2Int>(tiles);
+		this.tiles = new SerializableHashSet<Vector2Int>(tiles);
 		nodes = new SerializableDictionary<Vector2Int, Node>();
 		id = idCounter++;
 	}

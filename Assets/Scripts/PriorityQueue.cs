@@ -27,7 +27,7 @@ using System.Collections.Generic;
 		public void Enqueue(T item)
 		{
 			heap.Add(item);
-			int ci = heap.Count - 1; // child index; start at end
+			int ci = heap.Count - 1; // child index; position at end
 			while (ci > 0)
 			{
 				int pi = (ci - 1) / 2; // parent index
@@ -45,7 +45,7 @@ using System.Collections.Generic;
 			heap.RemoveAt(li);
 
 			--li; // last index (after removal)
-			int pi = 0; // parent index. start at front of pq
+			int pi = 0; // parent index. position at front of pq
 			while (true)
 			{
 				int ci = pi * 2 + 1; // left child index of parent

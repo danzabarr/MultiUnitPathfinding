@@ -10,17 +10,17 @@ public class Voxel2D
 
 	public static bool Line(Vector2 p0, Vector2 p1, Vector2 vSize, Vector2 vOffset, VisitNode callback)
 	{
-		return Ray(new Ray(p0.X0Z(), (p1 - p0).X0Z()), (p1 - p0).magnitude, vSize, vOffset, callback);
+		return Ray(new Ray(p0.X0Y(), (p1 - p0).X0Y()), (p1 - p0).magnitude, vSize, vOffset, callback);
 	}
 
 	public static bool Line(Vector2 p0, Vector2 p1, Vector2 vSize, Vector2 vOffset, VisitIntersection callback)
 	{
-		return Ray(new Ray(p0.X0Z(), (p1 - p0).X0Z()), (p1 - p0).magnitude, vSize, vOffset, callback);
+		return Ray(new Ray(p0.X0Y(), (p1 - p0).X0Y()), (p1 - p0).magnitude, vSize, vOffset, callback);
 	}
 
 	public static bool Line(Vector2 p0, Vector2 p1, Vector2 vSize, Vector2 vOffset, IObstruction obstruction)
 	{
-		return Ray(new Ray(p0.X0Z(), (p1 - p0).X0Z()), (p1 - p0).magnitude, vSize, vOffset, obstruction);
+		return Ray(new Ray(p0.X0Y(), (p1 - p0).X0Y()), (p1 - p0).magnitude, vSize, vOffset, obstruction);
 	}
 
 	public static bool Ray(Ray ray, float maxDistance, Vector2 vSize, Vector2 vOffset, VisitNode callback)

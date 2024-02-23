@@ -10,10 +10,23 @@ public enum Orientation
 [System.Serializable]
 public class Ramp
 {
-	public Vector2Int start;
-	public Orientation orientation;
+	public Vector2Int position;
 	public int length;
+	public Orientation orientation;
 	public Node n00, n01, n10, n11;
+
+	public Ramp() { }
+
+	public Ramp(Vector2Int position, int length, Orientation orientation, Node n00, Node n01, Node n10, Node n11)
+	{
+		this.position = position;
+		this.length = length;
+		this.orientation = orientation;
+		this.n00 = n00;
+		this.n01 = n01;
+		this.n10 = n10;
+		this.n11 = n11;
+	}
 
 	public IEnumerable<Node> Nodes
 	{
@@ -28,24 +41,22 @@ public class Ramp
 		}
 	}
 
-	
-
 	public bool Contains(Vector2Int tile) => Contains(tile.x, tile.y);
 
 	public bool Contains(int x, int z)
 	{
 		if (orientation == Orientation.HORIZONTAL)
 		{
-			if (x < start.x || x >= start.x + length)
+			if (x < position.x || x >= position.x + length)
 				return false;
-			if (z != start.y)
+			if (z != position.y)
 				return false;
 		}
 		else
 		{
-			if (z < start.y || z >= start.y + length)
+			if (z < position.y || z >= position.y + length)
 				return false;
-			if (x != start.x)
+			if (x != position.x)
 				return false;
 		}
 

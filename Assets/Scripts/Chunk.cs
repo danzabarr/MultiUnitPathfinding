@@ -12,26 +12,22 @@ using UnityEngine;
 public class Chunk : AbstractTerrainGenerator
 {
 	public TerrainGenerationSettings terrainSettings;
+	public Vector2Int size;
 	public Vector2Int chunkPosition;
-	public bool[] cliffs;
-	public int[] increments;
 
-	/*
-	 
-	 A tile can be:
-	- A flat area (with a height increment and area ID)
-	- A ramp (this is a cliff tile made accessible by a ramp, it is between two areas)
-	- A cliff (a tile between two flat areas, is has no area ID)
-	- A ramp corner (this is an accessible tile made inaccessible by a ramp, it belongs to an area)
-	- A node
-	- A ramp node
-	 */
 
+	public const int FLAT = 0;
+	public const int RAMP = -1;
+	public const int CLIFF = -2;
+	public const int WATER = -3;
+	public const int OUT_OF_BOUNDS = -4;
+
+	public int[] permanentObstructions;
+	
 	//TODO:
 	public bool smoothShading = true;
 
-	private Vector2Int size => GetComponentInParent<Map>().chunkSize * Vector2Int.one;
-
+	public Vector3 ChunkOffset => (chunkPosition * size).X0Y();
 	public Vector3 OnGround(Vector3 position)
 	{
 		return new Vector3(position.x, terrainSettings.Sample(position.x, position.z), position.z);
@@ -49,19 +45,10 @@ public class Chunk : AbstractTerrainGenerator
 		}
 	}
 
-	public bool IsCliff(int x, int y)
-	{
-		if (cliffs == null)
-			throw new System.Exception("Cliffs not generated");
-
-		if (x < 0 || x >= size.x || y < 0 || y >= size.y)
-			return false;
-
-		return cliffs[x + y * size.x];
-	}
-
 	public override void OnVertexUpdate()
 	{
+		// We just want to fix the quads here so that the shortest diagonal is used for triangulation
+
 		Vector3[] vertices = mesh.vertices;
 		int[] triangles = mesh.triangles;
 
@@ -69,13 +56,13 @@ public class Chunk : AbstractTerrainGenerator
 		{
 			for (int x = 0; x < size.x; x++, ti += 6, vi++)
 			{
-
+				/* Don't need to do this here
 				float minHeight = Mathf.Min(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
 				float maxHeight = Mathf.Max(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
 				if (maxHeight - minHeight > 0.01f)
 				{
-					//cliffs[x + y * size.x] = true;
-					//increments[x + y * size.x] = -1;
+					cliffs[x + y * size.x] = true;
+					increments[x + y * size.x] = -1;
 				}
 
 				if (terrainSettings.snapIncrement > 0)
@@ -83,7 +70,7 @@ public class Chunk : AbstractTerrainGenerator
 					int increment = Mathf.RoundToInt(minHeight / terrainSettings.snapIncrement);
 					increments[x + y * size.x] = increment;
 				}
-
+				*/
 				// rotate the triangles so that the diagonal is shortest
 
 				Vector3 v00 = vertices[vi];
@@ -127,42 +114,6 @@ public class Chunk : AbstractTerrainGenerator
 		mesh.RecalculateBounds();
 	}
 
-	private void OnDrawGizmos()
-	{
-		if (true)
-			return;
-		Color brown = new Color(0.5f, 0.25f, 0f, 0.5f);
-		Color green = new Color(0.5f, 1f, 0.5f, 0.5f);
-
-		Color lower = new Color(0.5f, 0.25f, 0f, 0.5f);
-		Color upper = new Color(0.5f, 1f, 0.5f, 0.5f);
-
-
-		//GUIStyle style = new GUIStyle();
-		//style.normal.textColor = Color.red;
-
-		for (int x = 0; x < size.x; x++)
-		{
-			for (int y = 0; y < size.y; y++)
-			{
-				int increment = increments[x + y * size.x];
-
-				if (increment < 0)
-					continue;
-
-				if (cliffs[x + y * size.x])
-					continue;
-
-				Vector3 position = OnGround(new Vector3(x, 0, y) + ChunkOffset);
-
-				Color color = Color.Lerp(lower, upper, (float)increment / 4);
-				Gizmos.color = color;
-				Gizmos.DrawCube(position, new Vector3(1f, 0.001f, 1f));
-				//Handles.Label(position, increment.ToString(), style);
-			}
-		}
-	}
-
 	public override void CreateArrays(out Vector3[] vertices, out int[] triangles, out Vector2[] uv, out Vector3[] normals)
 	{
 		transform.position = ChunkOffset;
@@ -181,8 +132,9 @@ public class Chunk : AbstractTerrainGenerator
 			}
 		}
 
-		cliffs = new bool[size.x * size.y];
-		increments = new int[size.x * size.y];
+		//cliffs = new bool[size.x * size.y];
+		permanentObstructions = new int[size.x * size.y];
+		//increments = new int[size.x * size.y];
 
 		for (int ti = 0, vi = 0, y = 0; y < size.y; y++, vi++)
 		{
@@ -191,16 +143,21 @@ public class Chunk : AbstractTerrainGenerator
 
 				float minHeight = Mathf.Min(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
 				float maxHeight = Mathf.Max(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
+
 				if (maxHeight - minHeight > 0.01f)
-				{
-					cliffs[x + y * size.x] = true;
-					//increments[x + y * size.x] = -1;
-				}
+					permanentObstructions[x + y * size.x] = CLIFF;
+				//cliffs[x + y * size.x] = true;
+				//increments[x + y * size.x] = -1;
+				else if (minHeight < 0)
+					permanentObstructions[x + y * size.x] = WATER;
+
+				else
+					permanentObstructions[x + y * size.x] = Mathf.RoundToInt(minHeight / terrainSettings.snapIncrement);
 
 				if (terrainSettings.snapIncrement > 0)
 				{
 					int increment = Mathf.RoundToInt(minHeight / terrainSettings.snapIncrement);
-					increments[x + y * size.x] = increment;
+					//increments[x + y * size.x] = increment;
 				}
 
 				// rotate the triangles so that the diagonal is shortest
@@ -296,7 +253,7 @@ public class Chunk : AbstractTerrainGenerator
 				Vector2Int tile = new Vector2Int(x, y);
 
 				//Area mouseArea = new Area(areas.Count + 1);
-				//mouseArea.AddNode(tile, OnGround(tile.X0Z()));
+				//mouseArea.AddNode(tile, OnGround(tile.X0Y()));
 				//void AddNode(int x, int y) => mouseArea.AddNode(new Vector2Int(x, y), OnGround(new Vector3(x, 0, y)));
 
 				while (queue.Count > 0)
@@ -391,5 +348,37 @@ public class Chunk : AbstractTerrainGenerator
 		*/
 	}
 
-	public Vector3 ChunkOffset => (chunkPosition * size).X0Z();
+	public void OnDrawGizmosSelected()
+	{
+		for (int x = 0; x < size.x; x++)
+		{
+			for (int y = 0; y < size.y; y++)
+			{
+				Vector3 position = OnGround(new Vector3(x, 0, y) + ChunkOffset);
+
+				int increment = permanentObstructions[x + y * size.x];
+
+				if (increment == CLIFF)
+				{
+					Gizmos.color = Color.red;
+					Gizmos.DrawSphere(position, 0.1f);
+				}
+				else if (increment == WATER)
+				{
+					Gizmos.color = Color.blue;
+					Gizmos.DrawSphere(position, 0.1f);
+				}
+				else if (increment == RAMP)
+				{
+					Gizmos.color = Color.green;
+					Gizmos.DrawSphere(position, 0.1f);
+				}
+				else
+				{
+					Handles.Label(position, increment.ToString());
+				}
+			}
+		}
+	}
+
 }

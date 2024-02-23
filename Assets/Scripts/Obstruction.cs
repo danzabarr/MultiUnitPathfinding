@@ -105,11 +105,11 @@ public abstract class AbstractObstructionCollection<Collection> : AbstractObstru
 	{
 		Gizmos.color = Color.green;
 		foreach (Vector2Int position in collection)
-			Gizmos.DrawWireCube(position.X0Z(), Vector3.one);
+			Gizmos.DrawWireCube(position.X0Y(), Vector3.one);
 
 		//Gizmos.color = new Color(1f, 0f, 0f, 0.5f);
 		//foreach (Vector2Int position in collection)
-		//	Gizmos.DrawCube(position.X0Z(), Vector3.one);
+		//	Gizmos.DrawCube(position.X0Y(), Vector3.one);
 	}
 }
 
