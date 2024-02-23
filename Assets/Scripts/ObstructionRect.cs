@@ -15,6 +15,11 @@ public class ObstructionRect : AbstractObstruction
 		return GetBoundingRectangle().Contains(position);
 	}
 
+	public override float SignedDistance(Vector2Int position)
+	{
+		return IObstruction.SDFAABB(position, GetBoundingRectangle());
+	}
+
 
 	public void OnDrawGizmosSelected()
 	{

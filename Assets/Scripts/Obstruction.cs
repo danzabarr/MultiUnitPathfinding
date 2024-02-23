@@ -9,6 +9,16 @@ public interface IObstruction
 {
 	RectInt GetBoundingRectangle();
 	bool Contains(Vector2Int position);
+
+	// Function for the signed distance field
+	float SignedDistance(Vector2Int position);
+
+	public static float SDFAABB(Vector2Int position, RectInt rect)
+	{
+		float dx = Mathf.Max(Mathf.Max(rect.x - position.x, 0), Mathf.Max(position.x - (rect.x + rect.width), 0));
+		float dy = Mathf.Max(Mathf.Max(rect.y - position.y, 0), Mathf.Max(position.y - (rect.y + rect.height), 0));
+		return Mathf.Sqrt(dx * dx + dy * dy);
+	}
 }
 
 /// <summary>
@@ -18,7 +28,11 @@ public abstract class AbstractObstruction : MonoBehaviour, IObstruction
 {
 	public abstract RectInt GetBoundingRectangle();
 	public abstract bool Contains(Vector2Int position);
+
+	public abstract float SignedDistance(Vector2Int position);
 }
+
+
 
 /// <summary>
 /// Version of previous type for collections.
@@ -28,6 +42,20 @@ public abstract class AbstractObstructionCollection<Collection> : AbstractObstru
 {
 	[SerializeField] protected Collection collection = default;
 	[SerializeField] protected RectInt boundingRectangle = new RectInt();
+
+	public override float SignedDistance(Vector2Int position)
+	{
+		float minDistance = float.MaxValue;
+
+		foreach (Vector2Int obstructionPosition in collection)
+		{
+			float distance = IObstruction.SDFAABB(position, new RectInt(obstructionPosition.x, obstructionPosition.y, 1, 1));
+			if (distance < minDistance)
+				minDistance = distance;
+		}
+
+		return minDistance;
+	}
 
 	public virtual void Add(Vector2Int position)
 	{
@@ -125,6 +153,11 @@ public abstract class AbstractObstructionCollection<Collection> : AbstractObstru
 public class Obstruction : AbstractObstruction
 {
 	public Vector2Int position;
+
+	public override float SignedDistance(Vector2Int position)
+	{
+		return IObstruction.SDFAABB(position, GetBoundingRectangle());
+	}
 
 	public override RectInt GetBoundingRectangle()
 	{

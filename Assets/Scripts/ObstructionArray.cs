@@ -47,4 +47,9 @@ public class ObstructionArray : AbstractObstruction
 			}
 		}
 	}
+
+	public override float SignedDistance(Vector2Int position)
+	{
+		throw new System.NotImplementedException();
+	}
 }
