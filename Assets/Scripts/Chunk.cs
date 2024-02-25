@@ -33,6 +33,14 @@ public class Chunk : AbstractTerrainGenerator
 		return new Vector3(position.x, terrainSettings.Sample(position.x, position.z), position.z);
 	}
 
+	public (Vector3, Vector3) OnMesh(Vector3 position)
+	{
+		if (collider.Raycast(new Ray(new Vector3(position.x, 100, position.z), Vector3.down), out RaycastHit hit, 200))
+			return (hit.point, hit.normal);
+
+		return (position, Vector3.up);
+	}
+
 	public IEnumerable<Vector2Int> Tiles
 	{
 		get
@@ -47,6 +55,7 @@ public class Chunk : AbstractTerrainGenerator
 
 	public override void OnVertexUpdate()
 	{
+
 		// We just want to fix the quads here so that the shortest diagonal is used for triangulation
 
 		Vector3[] vertices = mesh.vertices;
@@ -112,6 +121,39 @@ public class Chunk : AbstractTerrainGenerator
 
 		mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
+
+				
+	}
+
+	public void GenerateRocks()
+	{
+		Random.InitState(chunkPosition.x * 1000 + chunkPosition.y);
+		List<Matrix4x4> matrices = new List<Matrix4x4>();
+		for (int x = 0; x < size.x; x++)
+		{
+			for (int y = 0; y < size.y; y++)
+			{
+				if (permanentObstructions[x + y * size.x] == CLIFF)
+				{
+					for (int i = 0; i < Random.Range(1, 4); i++)
+					{
+						Vector2 range = new Vector2(-0.125f, 0.125f);
+						Vector2Int tile = new Vector2Int(x, y) + chunkPosition * size;
+						(Vector3 position, Vector3 normal) = OnMesh(new Vector3(tile.x + Random.Range(range.x, range.y), 0, tile.y + Random.Range(range.x, range.y)));
+						Quaternion rotation = // up is normal
+							Quaternion.LookRotation(Vector3.Cross(normal, Vector3.up), normal) *
+							Quaternion.Euler(0, Random.Range(0, 360), 0);
+						Vector3 scale = Random.Range(0.5f, 0.7f) * new Vector3(1, Random.Range(0.25f, 0.5f), 1);
+
+						//Apply the scale and rotation locally, then translate to the world position
+
+						Matrix4x4 matrix = Matrix4x4.TRS(position, rotation, scale);
+						matrices.Add(matrix);
+					}
+				}
+			}
+		}
+		GetComponent<BatchRenderer>().SetMatrices(matrices.ToArray());
 	}
 
 	public override void CreateArrays(out Vector3[] vertices, out int[] triangles, out Vector2[] uv, out Vector3[] normals)

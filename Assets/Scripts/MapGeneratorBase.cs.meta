@@ -3,7 +3,9 @@ guid: e84dc7a3b7db90a478b1486a0c0b5a22
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - terrainSettings: {fileID: 11400000, guid: 296f06bbe8309224380f6bf1d8713808, type: 2}
+  - chunkPrefab: {fileID: 2780437091792377978, guid: 83fb106147621fd4f8f5e81ad9377543, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

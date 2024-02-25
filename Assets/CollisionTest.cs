@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -25,14 +26,14 @@ public class CollisionTest : MonoBehaviour
 
 		foreach (Circle circle in circles)
 		{
-			Collision collision = DynamicCollisionCircle(position, velocity, radius, circle.center, Vector2.zero, circle.radius);
+			Collision collision = StaticCollisionCircle(position, radius, circle.center, circle.radius);
 			if (collision != null)
 				collisions[collision] = circle;
 		}
 
 		foreach (Rectangle rectangle in rectangles)
 		{
-			Collision collision = DynamicCollisionRectangle(position, velocity, radius, rectangle.rect);
+			Collision collision = StaticCollisionRectangle(position, radius, rectangle.rect);
 			if (collision != null)
 				collisions[collision] = rectangle;
 		}
@@ -81,40 +82,31 @@ public class CollisionTest : MonoBehaviour
 
 	public static Vector2 GetClosestPointOnRectangle(Vector2 point, Rect rect)
 	{
-		float width = rect.width;
-		float height = rect.height;
-		Vector2 rectangleCenter = new Vector2(rect.x + width / 2, rect.y + height / 2);
+		float l = rect.x,
+			t = rect.y,
+			w = rect.width,
+			h = rect.height;
+		float x = point.x;
+		float y = point.y;
 
-		// Calculate the half extents of the rectangle
-		float halfWidth = width / 2;
-		float halfHeight = height / 2;
+		float r = l + w;
+			float b = t + h;
 
-		// Calculate the max and min x and y bounds of the rectangle
-		float minX = rectangleCenter.x - halfWidth;
-		float maxX = rectangleCenter.x + halfWidth;
-		float minY = rectangleCenter.y - halfHeight;
-		float maxY = rectangleCenter.y + halfHeight;
+		x = Mathf.Clamp(x, l, r);
+		y = Mathf.Clamp(y, t, b);
 
-		// Clamp the point's x and y coordinates to be within the rectangle's perimeter
-		float closestX = Mathf.Max(minX, Mathf.Min(maxX, point.x));
-		float closestY = Mathf.Max(minY, Mathf.Min(maxY, point.y));
+			float dl = Mathf.Abs(x - l),
+				dr = Mathf.Abs(x - r),
+				dt = Mathf.Abs(y - t),
+				db = Mathf.Abs(y - b);
 
-		// Determine if the point is closest to the horizontal or vertical edges
-		bool closerToVerticalEdge = Mathf.Abs(closestX - point.x) < Mathf.Abs(closestY - point.y);
+			var m = Mathf.Min(dl, dr, dt, db);
 
-		if (closerToVerticalEdge)
-		{
-			// If closer to the vertical edge, set the y coordinate to the point's y, clamped within the rectangle
-			closestY = Mathf.Clamp(point.y, minY, maxY);
-		}
-		else
-		{
-			// If closer to the horizontal edge, set the x coordinate to the point's x, clamped within the rectangle
-			closestX = Mathf.Clamp(point.x, minX, maxX);
-		}
-
-		// Return the closest point on the rectangle perimeter
-		return new Vector2(closestX, closestY);
+			return (m == dt) ? 
+			new Vector2(x, t) : (m == db) ? 
+			new Vector2(x, b) : (m == dl) ? 
+			new Vector2(l, y) : 
+			new Vector2(r, y);
 	}
 
 	public static Vector2 GetClosestPointOnCircle(Vector2 position, Vector2 center, float radius)

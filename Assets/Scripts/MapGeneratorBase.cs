@@ -29,7 +29,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 	protected List<Area> areas = new List<Area>();
 	protected List<Ramp> ramps = new List<Ramp>();
 	protected List<AbstractObstruction> obstructions = new List<AbstractObstruction>();
-	protected SerializableDictionary<Node, SerializableDictionary<Node, float>> adjacency;
+	protected SerializableDictionary<Node, SerializableDictionary<Node, float>> adjacency = new SerializableDictionary<Node, SerializableDictionary<Node, float>>();
 
 	/// <summary>
 	/// This function regenerates the whole level.
@@ -46,6 +46,9 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		IdentifyAreas();
 		IdentifyRamps();
 		IdentifyNodes();
+
+		foreach (Chunk chunk in chunks.Values)
+			chunk.GenerateRocks();
 	}
 
 	[ContextMenu("Delete All")]
@@ -209,11 +212,11 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 			chunk.UpdateVertices(list);
 
 
-		// Remove the cliffs that are under the ramps
+		// Pop the cliffs that are under the ramps
 		foreach (Ramp ramp in ramps)
 		{
-			Vector2Int V00 = ramp.position + Vector2Int.one;// (ramp.orientation == Orientation.HORIZONTAL ? Vector2Int.right : Vector2Int.up);
-			Vector2Int V11 = ramp.position + new Vector2Int(ramp.orientation == Orientation.HORIZONTAL ? ramp.length - 1 : 1, ramp.orientation == Orientation.VERTICAL ? ramp.length - 1 : 1);
+			Vector2Int V00 = ramp.position;// (ramp.orientation == Orientation.HORIZONTAL ? Vector2Int.right : Vector2Int.up);
+			Vector2Int V11 = ramp.position + new Vector2Int(ramp.orientation == Orientation.HORIZONTAL ? ramp.length : 0, ramp.orientation == Orientation.VERTICAL ? ramp.length : 0);
 
 			for (int y = V00.y; y <= V11.y; y++)
 				for (int x = V00.x; x <= V11.x; x++)
@@ -297,6 +300,10 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 				}
 		}
 	}
+
+	// Add triangles in all the square corners, and trace the edge of the areas.
+	// This forms the navigation mesh.
+
 
 	static readonly Vector2Int[] DIAGONAL_DIRECTIONS = new Vector2Int[]
 	{

@@ -30,8 +30,8 @@ public abstract class AbstractTerrainGenerator : MonoBehaviour
 	public UnityEngine.Rendering.IndexFormat indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
 	protected Mesh mesh;
-	protected MeshFilter meshFilter;
-	protected MeshCollider meshCollider;
+	protected MeshFilter filter;
+	protected new MeshCollider collider;
 
 	/// <summary>
 	/// Implement this.
@@ -53,8 +53,8 @@ public abstract class AbstractTerrainGenerator : MonoBehaviour
 
 		OnVertexUpdate();
 
-		meshFilter.mesh = mesh;
-		meshCollider.sharedMesh = mesh;
+		filter.mesh = mesh;
+		collider.sharedMesh = mesh;
 	}
 
 	/// <summary>
@@ -75,7 +75,7 @@ public abstract class AbstractTerrainGenerator : MonoBehaviour
 	/// <returns></returns>
 	public bool Raycast(Ray ray, out RaycastHit hit)
 	{
-		return meshCollider.Raycast(ray, out hit, float.MaxValue);
+		return collider.Raycast(ray, out hit, float.MaxValue);
 	}
 
 	/// <summary>
@@ -89,11 +89,11 @@ public abstract class AbstractTerrainGenerator : MonoBehaviour
 		// Clears the mesh.
 		// Then calls implementor's CreateArrays method.
 
-		if (meshFilter == null)
-			meshFilter = GetComponent<MeshFilter>();
+		if (filter == null)
+			filter = GetComponent<MeshFilter>();
 
-		if (meshCollider == null)
-			meshCollider = GetComponent<MeshCollider>();
+		if (collider == null)
+			collider = GetComponent<MeshCollider>();
 
 		if (mesh == null)
 			mesh = new Mesh();
@@ -118,8 +118,8 @@ public abstract class AbstractTerrainGenerator : MonoBehaviour
 		else 
 			mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
-		meshFilter.mesh = mesh;
-		meshCollider.sharedMesh = mesh;
+		filter.mesh = mesh;
+		collider.sharedMesh = mesh;
 	}
 
 	// This is so the editor recreates the mesh in OnValidate.
