@@ -71,7 +71,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _EdgeFalloff: 50000
-    - _EdgeThreshold: 0.01
+    - _EdgeThreshold: 0.0015
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1

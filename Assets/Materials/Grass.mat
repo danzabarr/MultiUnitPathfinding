@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Grass
-  m_Shader: {fileID: 4800000, guid: 922937f64e5d9624f80315e3e0ebdb2e, type: 3}
+  m_Shader: {fileID: 4800000, guid: 2d53d943eb2bd7e40a4fe13a1005be0c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -47,10 +47,6 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _MaskTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -65,21 +61,16 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _WindDistortionMap:
         m_Texture: {fileID: 2800000, guid: b01286bb32ac3e44c97a9f617011f5e1, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 0.01, y: 0.01}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AltMax: 100
-    - _AltMaxBlend: 1
-    - _AltMin: 0
-    - _AltMinBlend: 1
-    - _Ambient: 1
-    - _BendRotationRandom: 0.2
-    - _BladeCurve: 2
+    - _BendRotationRandom: 0.259
+    - _BladeCurve: 1.85
     - _BladeForward: 0.38
-    - _BladeHeight: 0.5
+    - _BladeHeight: 1
     - _BladeHeightRandom: 0.3
-    - _BladeWidth: 0.05
+    - _BladeWidth: 0.2
     - _BladeWidthRandom: 0.02
     - _BumpScale: 1
     - _Cutoff: 0.5
@@ -88,31 +79,23 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _LocalUp: 1
-    - _MaskTexBlend: 0
-    - _MaskTexThreshold: 0.58
     - _Metallic: 0
-    - _MinSize: 0
     - _Mode: 0
-    - _ModelDiffuse: 1
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _SlopeBlend: 0
-    - _SlopeMax: 0.494
-    - _Smoothness: 0.5
+    - _SlopeMin: 0.8
     - _SmoothnessTextureChannel: 0
-    - _Specular: 1
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _TessellationUniform: 19.9
-    - _TranslucentGain: 0.5
+    - _TessellationUniform: 6
+    - _TranslucentGain: 1
     - _UVSec: 0
-    - _WindStrength: 1
+    - _WindStrength: 0.5
     - _ZWrite: 1
     m_Colors:
-    - _BottomColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BottomColor: {r: 0.26072443, g: 0.5943396, b: 0.32470542, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _TopColor: {r: 1, g: 1, b: 1, a: 1}
-    - _WindFrequency: {r: 0.05, g: 0.05, b: 0, a: 0}
+    - _TopColor: {r: 0.25882354, g: 0.59607846, b: 0.3254902, a: 1}
+    - _WindFrequency: {r: 0.005, g: 0.005, b: 0, a: 0}
   m_BuildTextureStacks: []
