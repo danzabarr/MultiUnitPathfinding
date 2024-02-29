@@ -123,7 +123,7 @@ Shader "Roystan/Grass"
 
 	float _SlopeMin;
 
-	#define BLADE_SEGMENTS 3
+	#define BLADE_SEGMENTS 1
 
 	// Geometry program that takes in a single triangle and outputs a blade
 	// of grass at that triangle first vertex position, aligned to the vertex's normal.
@@ -166,7 +166,7 @@ Shader "Roystan/Grass"
 			vTangent.x, vBinormal.x, vNormal.x,
 			vTangent.y, vBinormal.y, vNormal.y,
 			vTangent.z, vBinormal.z, vNormal.z
-			);
+		);
 
 		// Construct full tangent to local matrix, including our rotations.
 		// Construct a second matrix with only the facing rotation; this will be used 
@@ -184,7 +184,7 @@ Shader "Roystan/Grass"
 
 			float segmentHeight = height * t;
 			float segmentWidth = width * (1 - t);
-			float segmentForward = pow(t, _BladeCurve) * forward;
+			float segmentForward = pow(t + 1, _BladeCurve) * forward;
 
 			// Select the facing-only transformation matrix for the root of the blade.
 			float3x3 transformMatrix = i == 0 ? transformationMatrixFacing : transformationMatrix;
@@ -228,14 +228,13 @@ Shader "Roystan/Grass"
 
 			float4 frag (geometryOutput i,  fixed facing : VFACE) : SV_Target
             {			
-				float3 normal = facing > 0 ? i.normal : -i.normal;
+				float3 normal = facing < 0 ? i.normal : -i.normal;
 
 				float shadow = SHADOW_ATTENUATION(i);
-				float NdotL = saturate(saturate(dot(normal, _WorldSpaceLightPos0)) + _TranslucentGain) * shadow;
-
+				float NdotL = saturate(saturate(dot(normal, _WorldSpaceLightPos0)) + _TranslucentGain);
 				float3 ambient = ShadeSH9(float4(normal, 1));
-				float4 lightIntensity = NdotL * _LightColor0 + float4(ambient, 1);
-                float4 col = lerp(_BottomColor, _TopColor * lightIntensity, i.uv.y);
+				float4 lightIntensity = NdotL * _LightColor0 * shadow + float4(ambient, 1);
+                float4 col = lerp(_BottomColor, _TopColor, i.uv.y) * lightIntensity;
 
 				UNITY_APPLY_FOG(i.fogCoord, col);	
 
