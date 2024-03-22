@@ -125,6 +125,7 @@ public class Chunk : AbstractTerrainGenerator
 				
 	}
 
+	[ContextMenu("Generate Rocks")]
 	public void GenerateRocks()
 	{
 		Random.InitState(chunkPosition.x * 1000 + chunkPosition.y);

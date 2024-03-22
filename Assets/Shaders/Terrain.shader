@@ -1,46 +1,97 @@
-Shader "Custom/Terrain" {
-    Properties {
-        _Color ("Base Color", Color) = (1,1,1,1)
-        _UpColor ("Up Normals Color", Color) = (0,1,0,1)
-        _Threshold ("Threshold", Range(0,1)) = 0.9
-        _Blend ("Blend", Range(0,1)) = 0.5
-    }
-    SubShader {
-        Tags { "RenderType"="Opaque" }
-        LOD 200
+Shader "Toon/Terrain" 
+{
+	Properties 
+	{
+		_MainColor ("Flat Color", Color) = (1,1,1,1)
+        _SlopeColor ("Slope Color", Color) = (0,0,0,1)
+        _SlopeMin ("Slope Min", Range(0, 1)) = 0.5
+		_AmbientColor ("Ambient Color", Range(0, 1)) = 0.5
+		_ShadowThreshold ("Shadow Threshold", Range(0, 1)) = 0.5
+	}
+    SubShader 
+	{
+        Pass 
+		{
+            CGPROGRAM
 
-        CGPROGRAM
-        #pragma surface surf Standard fullforwardshadows
+            #pragma vertex vert
+            #pragma fragment frag
+			#include "UnityCG.cginc"
+			#include "Lighting.cginc"
+			#pragma multi_compile_fwdbase multi_compile_instancing
+			#include "AutoLight.cginc"
 
-        // Use shader model 3.0 target, to get nicer looking lighting
-        #pragma target 3.0
+			struct appdata
+			{
+				float4 vertex : POSITION;
+				float3 normal : NORMAL;
+				UNITY_VERTEX_INPUT_INSTANCE_ID
+			};
 
-        struct Input {
-            float3 worldNormal;
-        };
+			struct v2f
+			{
+				float4 pos : SV_POSITION;
+				float3 normal : NORMAL;
+				SHADOW_COORDS(1)
+				UNITY_VERTEX_INPUT_INSTANCE_ID 
+			};
 
-        half4 _Color;
-        half4 _UpColor;
-        half _Threshold;
-half _Blend;
+			fixed4 _MainColor;
+            fixed4 _SlopeColor;
+            float _SlopeMin;
+			float _AmbientColor;
+			float _ShadowThreshold;
 
-        void surf (Input IN, inout SurfaceOutputStandard o) {
-            // Check if the normal is facing up
-            
-            half upness = dot(IN.worldNormal, float3(0,1,0));
+            v2f vert (appdata v)
+			{
+				v2f o;
+				UNITY_SETUP_INSTANCE_ID(v);
+                UNITY_TRANSFER_INSTANCE_ID(v, o);
+				o.pos = UnityObjectToClipPos(v.vertex);
+				o.normal = UnityObjectToWorldNormal(v.normal);
+				TRANSFER_SHADOW(o)
 
-            if (upness > _Threshold) {
-                // Color for normals facing upwards
-                o.Albedo = _UpColor.rgb;
-            } else if (upness + _Blend > _Threshold) {
-// Blend between the two colors
-				o.Albedo = lerp(_Color.rgb, _UpColor.rgb, (upness + _Blend - _Threshold) / _Blend);
-			} else {
-				// Base color
-				o.Albedo = _Color.rgb;
-            } 
+				return o;
+			}
+
+			fixed4 frag (v2f i) : SV_Target
+			{
+
+                
+
+				// Calculate diffuse lighting
+				float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+				float diffuse = max(0, dot(normalize(i.normal), lightDir));
+
+				float shadow = SHADOW_ATTENUATION(i);
+
+				diffuse *= shadow;
+
+				// Apply threshold for toon shading
+				fixed4 finalColor;
+                float upness = dot(i.normal, float3(0,1,0));
+                finalColor = upness < _SlopeMin ? _SlopeColor : _MainColor;
+				if (diffuse > _ShadowThreshold) {
+                    
+                    // specular lighting
+					//float3 viewDir = normalize(_WorldSpaceCameraPos - i.pos);
+					//float3 reflectDir = reflect(-lightDir, i.normal);
+					//float spec = pow(saturate(dot(viewDir, reflectDir)), 16);
+                    
+                    
+				} else 
+                {
+                    finalColor = lerp(finalColor, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
+                }
+                
+				return finalColor;
+			}
+
+            ENDCG
         }
-        ENDCG
+
+		UsePass "Legacy Shaders/VertexLit/SHADOWCASTER"
+
+
     }
-    FallBack "Diffuse"
 }

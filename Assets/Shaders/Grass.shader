@@ -1,4 +1,4 @@
-Shader "Roystan/Grass"
+Shader "Toon/Grass"
 {
     Properties
     {
@@ -6,6 +6,7 @@ Shader "Roystan/Grass"
         _TopColor("Top Color", Color) = (1,1,1,1)
 		_BottomColor("Bottom Color", Color) = (1,1,1,1)
 		_TranslucentGain("Translucent Gain", Range(0,1)) = 0.5
+		_AmbientColor("Ambient Color", Range(0,1)) = 0.5
 		[Space]
 		_TessellationUniform ("Tessellation Uniform", Range(1, 64)) = 1
 		[Header(Blades)]
@@ -225,6 +226,7 @@ Shader "Roystan/Grass"
 			float4 _TopColor;
 			float4 _BottomColor;
 			float _TranslucentGain;
+			float _AmbientColor;
 
 			float4 frag (geometryOutput i,  fixed facing : VFACE) : SV_Target
             {			
@@ -233,8 +235,21 @@ Shader "Roystan/Grass"
 				float shadow = SHADOW_ATTENUATION(i);
 				float NdotL = saturate(saturate(dot(normal, _WorldSpaceLightPos0)) + _TranslucentGain);
 				float3 ambient = ShadeSH9(float4(normal, 1));
-				float4 lightIntensity = NdotL * _LightColor0 * shadow + float4(ambient, 1);
-                float4 col = lerp(_BottomColor, _TopColor, i.uv.y) * lightIntensity;
+				//float4 lightIntensity = NdotL * _LightColor0 * shadow + float4(ambient, 1);
+                //float4 col = lerp(_BottomColor, _TopColor, i.uv.y) * lightIntensity;
+				
+
+				float4 col = lerp(_BottomColor, _TopColor, i.uv.y);
+
+				float light = NdotL * shadow;
+				float _ShadowThreshold = 0.5;
+
+				
+
+				if (light < _ShadowThreshold)
+				{
+					col = lerp(col, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
+				}
 
 				UNITY_APPLY_FOG(i.fogCoord, col);	
 

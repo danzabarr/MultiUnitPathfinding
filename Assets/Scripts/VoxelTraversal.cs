@@ -36,8 +36,8 @@ public class Voxel2D
 			Vector2 p0 = ray.origin.XZ();
 			Vector2 p1 = (ray.origin + ray.direction * maxDistance).XZ();
 
-			float t0 = 0;
-			float t1 = 1;
+			//float t0 = 0;
+			//float t1 = 1;
 
 			float tNear = float.NegativeInfinity;
 			float tFar = float.PositiveInfinity;

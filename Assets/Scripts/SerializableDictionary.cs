@@ -18,6 +18,7 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
 	{
 		keys.Clear();
 		values.Clear();
+		
 		foreach (KeyValuePair<TKey, TValue> pair in this)
 		{
 			keys.Add(pair.Key);
@@ -31,9 +32,30 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
 		Clear();
 
 		if (keys.Count != values.Count)
-			throw new System.Exception(string.Format("there are {0} keys and {1} values after deserialization. Make sure that both key and value types are serializable."));
+		{
+			if (keys.Count > values.Count)
+			{
+				for (int i = values.Count; i < keys.Count; i++)
+				{
+					values.Add(default(TValue));
+				}
+			}
+			else
+			{
+				for (int i = keys.Count; i < values.Count; i++)
+				{
+					keys.Add(default(TKey));
+				}
+			}
+		}
+
+		if (keys.Count != values.Count)
+			throw new System.Exception(string.Format("there are {0} keys and {1} values after deserialization. Make sure that both key and value types are serializable.", keys.Count, values.Count));
 
 		for (int i = 0; i < keys.Count; i++)
-			Add(keys[i], values[i]);
+			if (ContainsKey(keys[i]))
+				Debug.LogWarning("Duplicate key: " + keys[i]);
+			else
+				Add(keys[i], values[i]);
 	}
 }
