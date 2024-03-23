@@ -48,10 +48,17 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		IdentifyNodes();
 
 		foreach (Chunk chunk in chunks.Values)
+			chunk.SetupOverheadCamera();
+
+		foreach (Chunk chunk in chunks.Values)
+			chunk.SetupGrass();
+
+		foreach (Chunk chunk in chunks.Values)
 			chunk.GenerateRocks();
 
 		foreach (Chunk chunk in chunks.Values)
 			chunk.RegenerateDecorations();
+
 	}
 
 	[ContextMenu("Delete All")]

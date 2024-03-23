@@ -14,8 +14,10 @@ public class Chunk : AbstractTerrainGenerator
 	public TerrainGenerationSettings terrainSettings;
 	public Vector2Int size;
 	public Vector2Int chunkPosition;
+	public Material grassMaterial;
 
-	public BatchRenderer rocks;
+	private Camera overheadCamera;
+	private GameObject grass;
 
 	public const int FLAT = 0;
 	public const int RAMP = -1;
@@ -29,9 +31,60 @@ public class Chunk : AbstractTerrainGenerator
 	public bool smoothShading = true;
 
 	public Vector3 ChunkOffset => (chunkPosition * size).X0Y();
+	
 	public Vector3 OnGround(Vector3 position)
 	{
 		return new Vector3(position.x, terrainSettings.Sample(position.x, position.z), position.z);
+	}
+
+	[ContextMenu("Create Grass")]
+	public void SetupGrass()
+	{
+		grass = new GameObject("Grass");
+		grass.layer = LayerMask.NameToLayer("Grass");
+		grass.transform.parent = transform;
+		grass.transform.localPosition = Vector3.zero;
+		grass.transform.localRotation = Quaternion.identity;
+		grass.transform.localScale = Vector3.one;
+		grass.AddComponent<MeshFilter>().sharedMesh = mesh;
+		MeshRenderer meshRenderer = grass.AddComponent<MeshRenderer>();
+		meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+		Material material = meshRenderer.sharedMaterial = new Material(grassMaterial);
+		material.SetTexture("_GrassMask", overheadCamera.targetTexture);
+		material.SetTextureScale("_GrassMask", new Vector2(1.0f / size.x, 1.0f / size.y));
+	}
+
+	[ContextMenu("Create Overhead Camera")]
+	public void SetupOverheadCamera()
+	{
+		overheadCamera = new GameObject("Overhead Camera").AddComponent<Camera>();
+		overheadCamera.transform.parent = transform;
+		overheadCamera.transform.localPosition = new Vector3(size.x / 2, 100, size.y / 2);
+		overheadCamera.transform.rotation = Quaternion.Euler(90, 0, 0);
+		overheadCamera.orthographic = true;
+		overheadCamera.orthographicSize = size.x / 2;
+		overheadCamera.nearClipPlane = 0.1f;
+		overheadCamera.farClipPlane = 200;
+		overheadCamera.targetTexture = new RenderTexture(size.x, size.y, 24);
+		overheadCamera.cullingMask = 1 << LayerMask.NameToLayer("Overhead Camera");
+		overheadCamera.clearFlags = CameraClearFlags.SolidColor;
+		overheadCamera.backgroundColor = Color.white;
+		//overheadCamera.enabled = false;
+	}
+
+	[ContextMenu("Regenerate Decorations")]
+	public void RegenerateDecorations()
+	{		
+		Random.InitState(chunkPosition.x * 2000 + chunkPosition.y);
+		foreach (Decorations decorations in GetComponents<Decorations>())
+			decorations.Regenerate();
+	}
+
+	[ContextMenu("Regenerate Cliff Decorations")]
+	public void GenerateRocks()
+	{
+		foreach (CliffDecorations cd in GetComponents<CliffDecorations>())
+			cd.GenerateRocks();
 	}
 
 	public int GetPermanentObstructionType(int x, int z)
@@ -138,45 +191,6 @@ public class Chunk : AbstractTerrainGenerator
 
 		mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
-	}
-
-	[ContextMenu("Regenerate Decorations")]
-	public void RegenerateDecorations()
-	{
-		foreach (Decorations decorations in GetComponents<Decorations>())
-			decorations.Regenerate();
-	}
-
-	[ContextMenu("Generate Rocks")]
-	public void GenerateRocks()
-	{
-		Random.InitState(chunkPosition.x * 1000 + chunkPosition.y);
-		List<Matrix4x4> matrices = new List<Matrix4x4>();
-		for (int x = 0; x < size.x; x++)
-		{
-			for (int y = 0; y < size.y; y++)
-			{
-				if (permanentObstructions[x + y * size.x] == CLIFF)
-				{
-					for (int i = 0; i < Random.Range(1, 4); i++)
-					{
-						Vector2 range = new Vector2(-0.125f, 0.125f);
-						Vector2Int tile = new Vector2Int(x, y) + chunkPosition * size;
-						(Vector3 position, Vector3 normal) = OnMesh(new Vector3(tile.x + Random.Range(range.x, range.y), 0, tile.y + Random.Range(range.x, range.y)));
-						Quaternion rotation = // up is normal
-							Quaternion.LookRotation(Vector3.Cross(normal, Vector3.forward), normal) *
-							Quaternion.Euler(0, Random.Range(0, 360), 0);
-						Vector3 scale = Random.Range(0.5f, 0.7f) * new Vector3(1, Random.Range(0.25f, 0.5f), 1);
-
-						//Apply the scale and rotation locally, then translate to the world position
-
-						Matrix4x4 matrix = Matrix4x4.TRS(position, rotation, scale);
-						matrices.Add(matrix);
-					}
-				}
-			}
-		}
-		rocks.SetMatrices(matrices.ToArray());
 	}
 
 	public override void CreateArrays(out Vector3[] vertices, out int[] triangles, out Vector2[] uv, out Vector3[] normals)
@@ -445,5 +459,4 @@ public class Chunk : AbstractTerrainGenerator
 			}
 		}
 	}
-
 }

@@ -8,6 +8,7 @@ public class BatchRenderer : MonoBehaviour
 {
 	public Material material;
 	public Mesh mesh;
+	public int layer;
 	private Matrix4x4[] matrices;
 
 	public Vector3 position;
@@ -64,6 +65,8 @@ public class BatchRenderer : MonoBehaviour
 			return;
 
 		Graphics.DrawMeshInstanced(mesh, 0, material, matrices);
+		MaterialPropertyBlock properties = new MaterialPropertyBlock();
+		Graphics.DrawMeshInstanced(mesh, 0, material, matrices, matrices.Length, properties, UnityEngine.Rendering.ShadowCastingMode.On, true, layer);
 	}
 
 	private void OnDrawGizmosSelected()

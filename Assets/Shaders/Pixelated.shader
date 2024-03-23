@@ -5,7 +5,7 @@ Shader "Toon/Pixelated"
         _MainTex ("Texture", 2D) = "white" {}
         _Resolution ("Resolution", Float) = 1024.0
         
-        _EdgeColor ("Edge Color", Color) = (0,0,0,1)
+        _EdgeColor ("Edge Colour", Color) = (0,0,0,1)
         _EdgeThreshold ("Edge Threshold", Float) = 0.05
         _EdgeFalloff ("Edge Falloff", Float) = 0.05
         _EdgeThickness ("Edge Thickness", Float) = 1.0

@@ -3,8 +3,8 @@ Shader "Toon/Textured"
 	Properties 
 	{
         _MainTex ("Texture", 2D) = "white" {}
-		_MainColor ("Main Color", Color) = (1,1,1,1)
-		_AmbientColor ("Ambient Color", Range(0, 1)) = 0.5
+		_MainColor ("Albedo", Color) = (1,1,1,1)
+		_AmbientColor ("Shadow Opacity", Range(0, 1)) = 0.5
 		_ShadowThreshold ("Shadow Threshold", Range(0, 1)) = 0.5
 	}
     SubShader 
@@ -17,7 +17,9 @@ Shader "Toon/Textured"
             #pragma fragment frag
 			#include "UnityCG.cginc"
 			#include "Lighting.cginc"
-			#pragma multi_compile_fwdbase multi_compile_instancing
+			#pragma multi_compile_fwdbase 
+			#pragma multi_compile_fog
+			#pragma multi_compile_instancing
 			#include "AutoLight.cginc"
 
 			struct appdata
@@ -34,6 +36,7 @@ Shader "Toon/Textured"
 				float3 normal : NORMAL;
                 float2 uv : TEXCOORD0;
 				SHADOW_COORDS(1)
+				UNITY_FOG_COORDS(2)
 				UNITY_VERTEX_INPUT_INSTANCE_ID 
 			};
 
@@ -50,7 +53,8 @@ Shader "Toon/Textured"
 				o.pos = UnityObjectToClipPos(v.vertex);
 				o.normal = UnityObjectToWorldNormal(v.normal);
                 o.uv = v.uv;
-				TRANSFER_SHADOW(o)
+				TRANSFER_SHADOW(o);
+				UNITY_TRANSFER_FOG(o, o.pos);
 
 				return o;
 			}
@@ -60,7 +64,9 @@ Shader "Toon/Textured"
 				float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
 				float lighting = max(0, dot(normalize(i.normal), lightDir)) * SHADOW_ATTENUATION(i);
                 fixed4 col = tex2D(_MainTex, i.uv) * _MainColor;
-				return lighting > _ShadowThreshold ? col : lerp(col, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
+				col = lighting > _ShadowThreshold ? col : lerp(col, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
+				UNITY_APPLY_FOG(i.fogCoord, col);
+				return col;
 			}
 
             ENDCG

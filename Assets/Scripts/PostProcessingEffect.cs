@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [ExecuteAlways]
-public class PostProc : MonoBehaviour
+public class PostProcessingEffect : MonoBehaviour
 {
 	public Camera cam;
 	public Material material;

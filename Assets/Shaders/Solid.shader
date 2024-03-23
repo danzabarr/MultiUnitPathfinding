@@ -2,8 +2,8 @@ Shader "Toon/Solid"
 {
 	Properties 
 	{
-		_MainColor ("Main Color", Color) = (1,1,1,1)
-		_AmbientColor ("Ambient Color", Range(0, 1)) = 0.4
+		_MainColor ("Albedo", Color) = (1,1,1,1)
+		_AmbientColor ("Shadow Opacity", Range(0, 1)) = 0.4
 		_ShadowThreshold ("Shadow Threshold", Range(0, 1)) = 0.3
 	}
     SubShader 
@@ -16,7 +16,9 @@ Shader "Toon/Solid"
             #pragma fragment frag
 			#include "UnityCG.cginc"
 			#include "Lighting.cginc"
-			#pragma multi_compile_fwdbase multi_compile_instancing
+			#pragma multi_compile_fwdbase 
+			#pragma multi_compile_fog
+			#pragma multi_compile_instancing
 			#include "AutoLight.cginc"
 
 			struct appdata
@@ -31,6 +33,7 @@ Shader "Toon/Solid"
 				float4 pos : SV_POSITION;
 				float3 normal : NORMAL;
 				SHADOW_COORDS(1)
+				UNITY_FOG_COORDS(2)
 				UNITY_VERTEX_INPUT_INSTANCE_ID 
 			};
 
@@ -45,7 +48,8 @@ Shader "Toon/Solid"
                 UNITY_TRANSFER_INSTANCE_ID(v, o);
 				o.pos = UnityObjectToClipPos(v.vertex);
 				o.normal = UnityObjectToWorldNormal(v.normal);
-				TRANSFER_SHADOW(o)
+				TRANSFER_SHADOW(o);
+				UNITY_TRANSFER_FOG(o, o.pos);
 
 				return o;
 			}
@@ -54,7 +58,9 @@ Shader "Toon/Solid"
 			{
 				float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
 				float lighting = max(0, dot(normalize(i.normal), lightDir)) * SHADOW_ATTENUATION(i);
-				return lighting > _ShadowThreshold ? _MainColor : lerp(_MainColor, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
+				fixed4 col = lighting > _ShadowThreshold ? _MainColor : lerp(_MainColor, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
+				UNITY_APPLY_FOG(i.fogCoord, col);
+				return col;
 			}
 
             ENDCG

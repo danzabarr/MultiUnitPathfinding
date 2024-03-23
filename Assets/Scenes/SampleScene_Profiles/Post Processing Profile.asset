@@ -1,5 +1,33 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8480450495382782479
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 556797029e73b2347956b6579e77e05b, type: 3}
+  m_Name: DepthOfField
+  m_EditorClassIdentifier: 
+  active: 0
+  enabled:
+    overrideState: 1
+    value: 1
+  focusDistance:
+    overrideState: 1
+    value: 10
+  aperture:
+    overrideState: 1
+    value: 0.1
+  focalLength:
+    overrideState: 1
+    value: 16
+  kernelSize:
+    overrideState: 1
+    value: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15,6 +43,7 @@ MonoBehaviour:
   settings:
   - {fileID: 1996735036371657941}
   - {fileID: 1092865210885761933}
+  - {fileID: -8480450495382782479}
 --- !u!114 &1092865210885761933
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -68,10 +97,10 @@ MonoBehaviour:
     value: 1
   temperature:
     overrideState: 0
-    value: 0
+    value: 17
   tint:
     overrideState: 0
-    value: 0
+    value: 38
   colorFilter:
     overrideState: 0
     value: {r: 1, g: 1, b: 1, a: 1}
@@ -80,7 +109,7 @@ MonoBehaviour:
     value: 0
   saturation:
     overrideState: 0
-    value: 0
+    value: 5
   brightness:
     overrideState: 0
     value: 0
@@ -89,16 +118,16 @@ MonoBehaviour:
     value: 0
   contrast:
     overrideState: 0
-    value: 0
+    value: 5
   mixerRedOutRedIn:
-    overrideState: 1
-    value: 134
+    overrideState: 0
+    value: 100
   mixerRedOutGreenIn:
     overrideState: 1
-    value: 87
+    value: 50
   mixerRedOutBlueIn:
     overrideState: 1
-    value: -141
+    value: -125
   mixerGreenOutRedIn:
     overrideState: 0
     value: 0
@@ -1344,10 +1373,10 @@ MonoBehaviour:
     value: 1
   intensity:
     overrideState: 1
-    value: 1
+    value: 5
   threshold:
     overrideState: 1
-    value: 0.5
+    value: 1
   softKnee:
     overrideState: 1
     value: 1
@@ -1361,8 +1390,8 @@ MonoBehaviour:
     overrideState: 0
     value: 0
   color:
-    overrideState: 0
-    value: {r: 1, g: 1, b: 1, a: 1}
+    overrideState: 1
+    value: {r: 1, g: 0.718674, b: 0.54905653, a: 1}
   fastMode:
     overrideState: 0
     value: 0

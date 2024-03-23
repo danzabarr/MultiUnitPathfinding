@@ -2,14 +2,22 @@ Shader "Toon/Grass"
 {
     Properties
     {
-		[Header(Shading)]
-        _TopColor("Top Color", Color) = (1,1,1,1)
-		_BottomColor("Bottom Color", Color) = (1,1,1,1)
-		_TranslucentGain("Translucent Gain", Range(0,1)) = 0.5
-		_AmbientColor("Ambient Color", Range(0,1)) = 0.5
 		[Space]
 		_TessellationUniform ("Tessellation Uniform", Range(1, 64)) = 1
-		[Header(Blades)]
+		_SlopeMin("Slope Threshold", Range(0, 1)) = 0.5
+		_GrassMask("Mask", 2D) = "white" {}
+		_GrassMaskThreshold("Mask Threshold", Range(0, 1)) = 0.5
+
+		[Header(Shading)][Space]
+		_TopColor("Top Colour", Color) = (1,1,1,1)
+		_BottomColor("Bottom Colour", Color) = (1,1,1,1)
+		_TranslucentGain("Translucent Gain", Range(0,1)) = 0.5
+		_AmbientColor("Shadow Opacity", Range(0,1)) = 0.5
+		_ShadowThreshold("Shadow Threshold", Range(0,1)) = 0.5
+		_ColorMap("Color Map", 2D) = "white" {}
+		_ColorMapOpacity("Color Map Opacity", Range(0,1)) = 1
+
+		[Header(Blades)][Space]
 		_BladeWidth("Blade Width", Float) = 0.05
 		_BladeWidthRandom("Blade Width Random", Float) = 0.02
 		_BladeHeight("Blade Height", Float) = 0.5
@@ -17,13 +25,13 @@ Shader "Toon/Grass"
 		_BladeForward("Blade Forward Amount", Float) = 0.38
 		_BladeCurve("Blade Curvature Amount", Range(1, 4)) = 2
 		_BendRotationRandom("Bend Rotation Random", Range(0, 1)) = 0.2
-		[Header(Wind)]
+
+		[Header(Wind)][Space]
 		_WindDistortionMap("Wind Distortion Map", 2D) = "white" {}
 		_WindStrength("Wind Strength", Float) = 1
 		_WindFrequency("Wind Frequency", Vector) = (0.05, 0.05, 0, 0)
-		[Header(Slopes)]
-		_SlopeMin("Slope Min", Range(0, 1)) = 0.5
-    }
+		
+	}
 
 	CGINCLUDE
 	#include "UnityCG.cginc"
@@ -33,7 +41,8 @@ Shader "Toon/Grass"
 	struct geometryOutput
 	{
 		float4 pos : SV_POSITION;
-	#if UNITY_PASS_FORWARDBASE		
+	#if UNITY_PASS_FORWARDBASE
+		float3 vertex : TEXCOORD3;
 		float3 normal : NORMAL;
 		float2 uv : TEXCOORD0;
 		// unityShadowCoord4 is defined as a float4 in UnityShadowLibrary.cginc.
@@ -71,13 +80,14 @@ Shader "Toon/Grass"
 			);
 	}
 
-	geometryOutput VertexOutput(float3 pos, float3 normal, float2 uv)
+	geometryOutput VertexOutput(float3 vertex, float3 pos, float3 normal, float2 uv)
 	{
 		geometryOutput o;
 
 		o.pos = UnityObjectToClipPos(pos);
 
-	#if UNITY_PASS_FORWARDBASE
+	#if UNITY_PASS_FORWARDBASE 
+		o.vertex = vertex;
 		o.normal = UnityObjectToWorldNormal(normal);
 		o.uv = uv;
 		// Shadows are sampled from a screen-space shadow map texture.
@@ -102,7 +112,8 @@ Shader "Toon/Grass"
 
 		float3 localPosition = vertexPosition + mul(transformMatrix, tangentPoint);
 		float3 localNormal = mul(transformMatrix, tangentNormal);
-		return VertexOutput(localPosition, localNormal, uv);
+		float3 worldPosition = mul(unity_ObjectToWorld, float4(localPosition, 1));
+		return VertexOutput(worldPosition, localPosition, localNormal, uv);
 	}
 
 	float _BladeHeight;
@@ -118,6 +129,10 @@ Shader "Toon/Grass"
 
 	sampler2D _WindDistortionMap;
 	float4 _WindDistortionMap_ST;
+
+	sampler2D _GrassMask;
+	float4 _GrassMask_ST;
+	float _GrassMaskThreshold;
 
 	float _WindStrength;
 	float2 _WindFrequency;
@@ -140,6 +155,15 @@ Shader "Toon/Grass"
 			// Don't generate grass on steep slopes.
 			return;
 		}
+
+		// Sample the grass mask to determine if we should generate grass at this position.
+
+		float3 maskTextureSample = tex2Dlod(_GrassMask, float4(TRANSFORM_TEX(pos.xz, _GrassMask), 0, 0)).rgb;
+
+		float sample = (maskTextureSample.x + maskTextureSample.y + maskTextureSample.z) / 3;
+
+		if (sample < _GrassMaskThreshold)
+			return;
 
 		// Each blade of grass is constructed in tangent space with respect
 		// to the emitting vertex's normal and tangent vectors, where the width
@@ -189,7 +213,7 @@ Shader "Toon/Grass"
 
 			// Select the facing-only transformation matrix for the root of the blade.
 			float3x3 transformMatrix = i == 0 ? transformationMatrixFacing : transformationMatrix;
-
+ 
 			triStream.Append(GenerateGrassVertex(pos, segmentWidth, segmentHeight, segmentForward, float2(0, t), transformMatrix));
 			triStream.Append(GenerateGrassVertex(pos, -segmentWidth, segmentHeight, segmentForward, float2(1, t), transformMatrix));
 		}
@@ -227,6 +251,11 @@ Shader "Toon/Grass"
 			float4 _BottomColor;
 			float _TranslucentGain;
 			float _AmbientColor;
+			float _ShadowThreshold;
+
+			sampler2D _ColorMap;
+			float4 _ColorMap_ST;
+			float _ColorMapOpacity;
 
 			float4 frag (geometryOutput i,  fixed facing : VFACE) : SV_Target
             {			
@@ -237,15 +266,19 @@ Shader "Toon/Grass"
 				float3 ambient = ShadeSH9(float4(normal, 1));
 				//float4 lightIntensity = NdotL * _LightColor0 * shadow + float4(ambient, 1);
                 //float4 col = lerp(_BottomColor, _TopColor, i.uv.y) * lightIntensity;
-				
 
 				float4 col = lerp(_BottomColor, _TopColor, i.uv.y);
 
+				float2 samplePosition = i.vertex.xz + float2(0.5, 0.5);
+
+				samplePosition = TRANSFORM_TEX(samplePosition, _ColorMap);
+
+				float4 colorMapSample = tex2Dlod(_ColorMap, float4(samplePosition, 0, 0));
+				//float4 colorMapSample = tex2D(_ColorMap, TRANSFORM_TEX(i.uv, _ColorMap));
+				col = lerp(col, colorMapSample, _ColorMapOpacity);
+
 				float light = NdotL * shadow;
-				float _ShadowThreshold = 0.5;
-
 				
-
 				if (light < _ShadowThreshold)
 				{
 					col = lerp(col, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
