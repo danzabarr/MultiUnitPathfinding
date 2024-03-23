@@ -49,6 +49,9 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 
 		foreach (Chunk chunk in chunks.Values)
 			chunk.GenerateRocks();
+
+		foreach (Chunk chunk in chunks.Values)
+			chunk.RegenerateDecorations();
 	}
 
 	[ContextMenu("Delete All")]
@@ -227,7 +230,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 					if (TryGetChunk(chunkCoord, out Chunk chunk))
 					{
 						Vector2Int localPosition = new Vector2Int(x, y) - chunkCoord * chunkSize;
-						chunk.permanentObstructions[localPosition.x + localPosition.y * chunkSize] = Chunk.RAMP;
+						chunk.SetRamp(localPosition.x, localPosition.y);
 					}
 				}
 		}
@@ -390,12 +393,12 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		return CreateChunk(x, y);
 	}
 
-	protected bool TryGetChunk(int x, int y, out Chunk get)
+	public bool TryGetChunk(int x, int y, out Chunk get)
 	{
 		return TryGetChunk(new Vector2Int(x, y), out get);
 	}
 
-	protected bool TryGetChunk(Vector2Int tile, out Chunk get)
+	public bool TryGetChunk(Vector2Int tile, out Chunk get)
 	{
 		get = null;
 
@@ -423,51 +426,51 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		return chunk;
 	}
 
-	protected bool IsCliff(Vector2Int tile)
+	public bool IsCliff(Vector2Int tile)
 	{
 		Vector2Int chunkCoord = tile.ToChunkCoord(chunkSize);
 		if (TryGetChunk(chunkCoord, out Chunk chunk))
 		{
 			tile -= chunkCoord * chunkSize;
-			return chunk.permanentObstructions[tile.x + tile.y * chunkSize] == Chunk.CLIFF;
+			return chunk.GetPermanentObstructionType(tile.x, tile.y) == Chunk.CLIFF;
 		}
 
 		return false;
 	}
 
-	protected int GetIncrement(Vector2Int tile)
+	public int GetIncrement(Vector2Int tile)
 	{
 		Vector2Int chunkCoord = tile.ToChunkCoord(chunkSize);
 		if (TryGetChunk(chunkCoord, out Chunk chunk))
 		{
 			tile -= chunkCoord * chunkSize;
 
-			return Mathf.Max(-1, chunk.permanentObstructions[tile.x + tile.y * chunkSize]);
+			return Mathf.Max(-1, chunk.GetPermanentObstructionType(tile.x, tile.y));
 		}
 
 		return Chunk.OUT_OF_BOUNDS;
 	}
 
-	protected int GetPermanentObstructionType(Vector2Int tile)
+	public int GetPermanentObstructionType(Vector2Int tile)
 	{
 		Vector2Int chunkCoord = tile.ToChunkCoord(chunkSize);
 		if (TryGetChunk(chunkCoord, out Chunk chunk))
 		{
 			tile -= chunkCoord * chunkSize;
 
-			return chunk.permanentObstructions[tile.x + tile.y * chunkSize];
+			return chunk.GetPermanentObstructionType(tile.x, tile.y);
 		}
 
 		return Chunk.OUT_OF_BOUNDS;
 	}
 
-	protected bool IsAccessible(Vector2Int tile)
+	public bool IsAccessible(Vector2Int tile)
 	{
 		Vector2Int chunkCoord = tile.ToChunkCoord(chunkSize);
 		if (TryGetChunk(chunkCoord, out Chunk chunk))
 		{
 			tile -= chunkCoord * chunkSize;
-			return chunk.permanentObstructions[tile.x + tile.y * chunkSize] >= -1;
+			return chunk.GetPermanentObstructionType(tile.x, tile.y) >= -1;
 		}
 
 		return false;
@@ -650,12 +653,12 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 	/// <param name="x"></param>
 	/// <param name="z"></param>
 	/// <returns></returns>
-	protected Vector3 OnGround(float x, float z)
+	public Vector3 OnGround(float x, float z)
 	{
 		return new Vector3(x, terrainSettings.Sample(x, z), z);
 	}
 
-	protected Vector3 OnGround(Vector2Int tile)
+	public Vector3 OnGround(Vector2Int tile)
 	{
 		return OnGround(tile.x, tile.y);
 	}
@@ -668,7 +671,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 	/// <param name="allowInaccessibleStart"></param>
 	/// <param name="allowInaccessibleEnd"></param>
 	/// <returns></returns>
-	protected bool IsVisible(Vector2 start, Vector2 end, bool allowInaccessibleStart = false, bool allowInaccessibleEnd = false, bool allowOverRamps = false)
+	public bool IsVisible(Vector2 start, Vector2 end, bool allowInaccessibleStart = false, bool allowInaccessibleEnd = false, bool allowOverRamps = false)
 	{
 		if (start == end)
 			return true;

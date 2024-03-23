@@ -56,33 +56,12 @@ Shader "Toon/Terrain"
 
 			fixed4 frag (v2f i) : SV_Target
 			{
-
-                
-
-				// Calculate diffuse lighting
 				float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-				float diffuse = max(0, dot(normalize(i.normal), lightDir));
-
-				float shadow = SHADOW_ATTENUATION(i);
-
-				diffuse *= shadow;
-
-				// Apply threshold for toon shading
-				fixed4 finalColor;
-                float upness = dot(i.normal, float3(0,1,0));
-                finalColor = upness < _SlopeMin ? _SlopeColor : _MainColor;
-				if (diffuse > _ShadowThreshold) {
-                    
-                    // specular lighting
-					//float3 viewDir = normalize(_WorldSpaceCameraPos - i.pos);
-					//float3 reflectDir = reflect(-lightDir, i.normal);
-					//float spec = pow(saturate(dot(viewDir, reflectDir)), 16);
-                    
-                    
-				} else 
-                {
+				float lighting = max(0, dot(normalize(i.normal), lightDir)) * SHADOW_ATTENUATION(i);
+				
+				fixed4 finalColor = dot(i.normal, float3(0,1,0)) < _SlopeMin ? _SlopeColor : _MainColor;
+				if (lighting <= _ShadowThreshold) 
                     finalColor = lerp(finalColor, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
-                }
                 
 				return finalColor;
 			}

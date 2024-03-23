@@ -111,6 +111,7 @@ GameObject:
   - component: {fileID: 2780437091792377978}
   - component: {fileID: 5592527072880657951}
   - component: {fileID: 294766999364677294}
+  - component: {fileID: 281036865798794716}
   m_Layer: 0
   m_Name: Chunk
   m_TagString: Untagged
@@ -202,7 +203,7 @@ MonoBehaviour:
   terrainSettings: {fileID: 11400000, guid: 296f06bbe8309224380f6bf1d8713808, type: 2}
   size: {x: 0, y: 0}
   chunkPosition: {x: 0, y: 0}
-  permanentObstructions: 
+  rocks: {fileID: 294766999364677294}
   smoothShading: 1
 --- !u!64 &5592527072880657951
 MeshCollider:
@@ -243,6 +244,26 @@ MonoBehaviour:
   position: {x: 0, y: 0, z: 0}
   scale: {x: 0, y: 0, z: 0}
   rotation: {x: 0, y: 0, z: 0}
+--- !u!114 &281036865798794716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2051061230664601798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de0552b711e4bf64590eb52cadebeaca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: 58d53420af384224ea4cfee8973d18cb, type: 2}
+  meshes:
+  - {fileID: 4300000, guid: 7d350a824190e0647822f95e9f7bbc97, type: 3}
+  - {fileID: 4300000, guid: 7710c12951e94d24eb1b65f105f6823e, type: 3}
+  - {fileID: 4300000, guid: 7710c12951e94d24eb1b65f105f6823e, type: 3}
+  seed: 0
+  density: 0.1
+  placement: 3
 --- !u!1 &2896160574498387321
 GameObject:
   m_ObjectHideFlags: 0

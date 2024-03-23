@@ -15,6 +15,7 @@ public class Chunk : AbstractTerrainGenerator
 	public Vector2Int size;
 	public Vector2Int chunkPosition;
 
+	public BatchRenderer rocks;
 
 	public const int FLAT = 0;
 	public const int RAMP = -1;
@@ -22,7 +23,7 @@ public class Chunk : AbstractTerrainGenerator
 	public const int WATER = -3;
 	public const int OUT_OF_BOUNDS = -4;
 
-	public int[] permanentObstructions;
+	private int[] permanentObstructions;
 	
 	//TODO:
 	public bool smoothShading = true;
@@ -31,6 +32,22 @@ public class Chunk : AbstractTerrainGenerator
 	public Vector3 OnGround(Vector3 position)
 	{
 		return new Vector3(position.x, terrainSettings.Sample(position.x, position.z), position.z);
+	}
+
+	public int GetPermanentObstructionType(int x, int z)
+	{
+		if (x < 0 || x >= size.x || z < 0 || z >= size.y)
+			return OUT_OF_BOUNDS;
+
+		return permanentObstructions[x + z * size.x];
+	}
+
+	public void SetRamp(int x, int z)
+	{
+		if (x < 0 || x >= size.x || z < 0 || z >= size.y)
+			return;
+			
+		permanentObstructions[x + z * size.x] = RAMP;
 	}
 
 	public (Vector3, Vector3) OnMesh(Vector3 position)
@@ -121,8 +138,13 @@ public class Chunk : AbstractTerrainGenerator
 
 		mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
+	}
 
-				
+	[ContextMenu("Regenerate Decorations")]
+	public void RegenerateDecorations()
+	{
+		foreach (Decorations decorations in GetComponents<Decorations>())
+			decorations.Regenerate();
 	}
 
 	[ContextMenu("Generate Rocks")]
@@ -142,7 +164,7 @@ public class Chunk : AbstractTerrainGenerator
 						Vector2Int tile = new Vector2Int(x, y) + chunkPosition * size;
 						(Vector3 position, Vector3 normal) = OnMesh(new Vector3(tile.x + Random.Range(range.x, range.y), 0, tile.y + Random.Range(range.x, range.y)));
 						Quaternion rotation = // up is normal
-							Quaternion.LookRotation(Vector3.Cross(normal, Vector3.up), normal) *
+							Quaternion.LookRotation(Vector3.Cross(normal, Vector3.forward), normal) *
 							Quaternion.Euler(0, Random.Range(0, 360), 0);
 						Vector3 scale = Random.Range(0.5f, 0.7f) * new Vector3(1, Random.Range(0.25f, 0.5f), 1);
 
@@ -154,7 +176,7 @@ public class Chunk : AbstractTerrainGenerator
 				}
 			}
 		}
-		GetComponent<BatchRenderer>().SetMatrices(matrices.ToArray());
+		rocks.SetMatrices(matrices.ToArray());
 	}
 
 	public override void CreateArrays(out Vector3[] vertices, out int[] triangles, out Vector2[] uv, out Vector3[] normals)

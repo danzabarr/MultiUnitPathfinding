@@ -52,30 +52,9 @@ Shader "Toon/Solid"
 
 			fixed4 frag (v2f i) : SV_Target
 			{
-				// Calculate diffuse lighting
 				float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-				float diffuse = max(0, dot(normalize(i.normal), lightDir));
-
-				float shadow = SHADOW_ATTENUATION(i);
-
-				diffuse *= shadow;
-
-				// Apply threshold for toon shading
-				fixed4 finalColor;
-				if (diffuse > _ShadowThreshold) {
-					
-					// specular lighting
-					//float3 viewDir = normalize(_WorldSpaceCameraPos - i.pos);
-					//float3 reflectDir = reflect(-lightDir, i.normal);
-					//float spec = pow(saturate(dot(viewDir, reflectDir)), 16);
-
-					finalColor = _MainColor;
-
-				} else {
-					// Use shaded color
-					finalColor = lerp(_MainColor, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
-				}
-				return finalColor;
+				float lighting = max(0, dot(normalize(i.normal), lightDir)) * SHADOW_ATTENUATION(i);
+				return lighting > _ShadowThreshold ? _MainColor : lerp(_MainColor, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
 			}
 
             ENDCG
