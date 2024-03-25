@@ -1,0 +1,35 @@
+Date : 2024-03-24 23:55:26
+Directory : c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr
+Total : 6 files,  269 codes, 25 comments, 78 blanks, all 372 lines
+
+Languages
++-------------+------------+------------+------------+------------+------------+
+| language    | files      | code       | comment    | blank      | total      |
++-------------+------------+------------+------------+------------+------------+
+| C#          |          5 |        262 |         24 |         77 |        363 |
+| UnityShader |          1 |          7 |          1 |          1 |          9 |
++-------------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                   | files      | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                      |          6 |        269 |         25 |         78 |        372 |
+| DEMO                                                                                                   |          5 |        262 |         24 |         77 |        363 |
+| DEMO\Scripts                                                                                           |          5 |        262 |         24 |         77 |        363 |
+| Toon                                                                                                   |          1 |          7 |          1 |          1 |          9 |
+| Toon\Shaders                                                                                           |          1 |          7 |          1 |          1 |          9 |
++--------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------------------------------------------------------------+-------------+------------+------------+------------+------------+
+| filename                                                                                               | language    | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------------+-------------+------------+------------+------------+------------+
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Bridge.cs           | C#          |         21 |          0 |          4 |         25 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Chunk.cs            | C#          |          7 |          0 |          2 |          9 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Decorations.cs      | C#          |          5 |          0 |          2 |          7 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Map.cs              | C#          |         13 |          0 |          2 |         15 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\MapGeneratorBase.cs | C#          |        216 |         24 |         67 |        307 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Toon\Shaders\Grass.shader        | UnityShader |          7 |          1 |          1 |          9 |
+| Total                                                                                                  |             |        269 |         25 |         78 |        372 |
++--------------------------------------------------------------------------------------------------------+-------------+------------+------------+------------+------------+

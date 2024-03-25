@@ -1,0 +1,135 @@
+Date : 2024-03-24 19:25:16
+Directory : c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding
+Total : 83 files,  8049 codes, 711 comments, 1822 blanks, all 10582 lines
+
+Languages
++-------------+------------+------------+------------+------------+------------+
+| language    | files      | code       | comment    | blank      | total      |
++-------------+------------+------------+------------+------------+------------+
+| C#          |         51 |      4,181 |        508 |        993 |      5,682 |
+| UnityShader |         28 |      3,237 |        203 |        823 |      4,263 |
+| JSON        |          3 |        630 |          0 |          4 |        634 |
+| Markdown    |          1 |          1 |          0 |          2 |          3 |
++-------------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                                                     | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                                        |         83 |      8,049 |        711 |      1,822 |     10,582 |
+| . (Files)                                                                                                                                |          1 |          1 |          0 |          2 |          3 |
+| Assets                                                                                                                                   |         80 |      7,573 |        711 |      1,818 |     10,102 |
+| Assets\Quirky Series Ultimate                                                                                                            |          4 |        274 |         27 |         54 |        355 |
+| Assets\Quirky Series Ultimate\_Scripts                                                                                                   |          2 |        195 |         20 |         38 |        253 |
+| Assets\Quirky Series Ultimate\_Shader                                                                                                    |          2 |         79 |          7 |         16 |        102 |
+| Assets\Supercyan Character Pack Free Sample                                                                                              |          8 |        658 |         76 |        118 |        852 |
+| Assets\Supercyan Character Pack Free Sample\Scripts                                                                                      |          5 |        394 |          6 |         93 |        493 |
+| Assets\Supercyan Character Pack Free Sample\Shaders                                                                                      |          3 |        264 |         70 |         25 |        359 |
+| Assets\Supercyan Character Pack Free Sample\Shaders (Files)                                                                              |          2 |         61 |          0 |         16 |         77 |
+| Assets\Supercyan Character Pack Free Sample\Shaders\Legacy                                                                               |          1 |        203 |         70 |          9 |        282 |
+| Assets\TextMesh Pro                                                                                                                      |         18 |      2,493 |         82 |        646 |      3,221 |
+| Assets\TextMesh Pro\Shaders                                                                                                              |         17 |      2,338 |         82 |        644 |      3,064 |
+| Assets\TextMesh Pro\Sprites                                                                                                              |          1 |        155 |          0 |          2 |        157 |
+| Assets\danzabarr                                                                                                                         |         50 |      4,148 |        526 |      1,000 |      5,674 |
+| Assets\danzabarr\DEMO                                                                                                                    |         27 |      2,530 |        360 |        596 |      3,486 |
+| Assets\danzabarr\DEMO\Editor                                                                                                             |          2 |         34 |          0 |         10 |         44 |
+| Assets\danzabarr\DEMO\Scripts                                                                                                            |         25 |      2,496 |        360 |        586 |      3,442 |
+| Assets\danzabarr\Extensions                                                                                                              |          4 |        194 |         11 |         47 |        252 |
+| Assets\danzabarr\Navigation                                                                                                              |         11 |        714 |         57 |        183 |        954 |
+| Assets\danzabarr\Toon                                                                                                                    |          7 |        575 |         44 |        143 |        762 |
+| Assets\danzabarr\Toon\Scripts                                                                                                            |          1 |         19 |          0 |          5 |         24 |
+| Assets\danzabarr\Toon\Shaders                                                                                                            |          6 |        556 |         44 |        138 |        738 |
+| Assets\danzabarr\pxl-UI                                                                                                                  |          1 |        135 |         54 |         31 |        220 |
+| Assets\danzabarr\pxl-UI\Scripts                                                                                                          |          1 |        135 |         54 |         31 |        220 |
+| Packages                                                                                                                                 |          2 |        475 |          0 |          2 |        477 |
++------------------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------------------------------------------------------------------------------------+-------------+------------+------------+------------+------------+
+| filename                                                                                                                                 | language    | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------------------------------------------------------+-------------+------------+------------+------------+------------+
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Quirky Series Ultimate\_Scripts\QuirkySeriesDemo.cs                          | C#          |        180 |         19 |         34 |        233 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Quirky Series Ultimate\_Scripts\RotateOnScroll.cs                            | C#          |         15 |          1 |          4 |         20 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Quirky Series Ultimate\_Shader\SoftSurface.shader                            | UnityShader |         33 |          1 |          5 |         39 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Quirky Series Ultimate\_Shader\ToonRamp.shader                               | UnityShader |         46 |          6 |         11 |         63 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Supercyan Character Pack Free Sample\Scripts\AccessoryLogic.cs               | C#          |         11 |          0 |          3 |         14 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Supercyan Character Pack Free Sample\Scripts\AccessoryWearLogic.cs           | C#          |         95 |          0 |         15 |        110 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Supercyan Character Pack Free Sample\Scripts\DemoFree.cs                     | C#          |         72 |          0 |         21 |         93 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Supercyan Character Pack Free Sample\Scripts\FreeCameraLogic.cs              | C#          |         48 |          0 |         13 |         61 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Supercyan Character Pack Free Sample\Scripts\SimpleSampleCharacterControl.cs | C#          |        168 |          6 |         41 |        215 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Supercyan Character Pack Free Sample\Shaders\Legacy\CelShader.shader         | UnityShader |        203 |         70 |          9 |        282 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Supercyan Character Pack Free Sample\Shaders\SupercyanShader.shader          | UnityShader |         33 |          0 |          6 |         39 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\Supercyan Character Pack Free Sample\Shaders\SupercyanShaderLighting.cginc   | UnityShader |         28 |          0 |         10 |         38 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_Bitmap-Custom-Atlas.shader                          | UnityShader |        109 |          2 |         33 |        144 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_Bitmap-Mobile.shader                                | UnityShader |        112 |          3 |         31 |        146 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader                                       | UnityShader |        109 |          2 |         33 |        144 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_SDF Overlay.shader                                  | UnityShader |        243 |          4 |         71 |        318 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader                                      | UnityShader |        241 |          4 |         66 |        311 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader                           | UnityShader |        188 |         10 |         50 |        248 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader                           | UnityShader |        183 |          8 |         50 |        241 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile SSD.shader                               | UnityShader |         82 |          4 |         21 |        107 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile.shader                                   | UnityShader |        183 |          8 |         50 |        241 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader                           | UnityShader |        103 |          8 |         28 |        139 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_SDF-Surface.shader                                  | UnityShader |        122 |          4 |         33 |        159 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_SDF.shader                                          | UnityShader |        243 |          4 |         71 |        318 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMP_Sprite.shader                                       | UnityShader |         97 |          0 |         20 |        117 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMPro.cginc                                             | UnityShader |         63 |          2 |         20 |         85 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc                                      | UnityShader |        122 |          2 |         34 |        158 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc                                  | UnityShader |         62 |         10 |         14 |         86 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc                                     | UnityShader |         76 |          7 |         19 |        102 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\TextMesh Pro\Sprites\EmojiOne.json                                           | JSON        |        155 |          0 |          2 |        157 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Editor\DecorationsEditor.cs                                   | C#          |         17 |          0 |          5 |         22 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Editor\MapEditor.cs                                           | C#          |         17 |          0 |          5 |         22 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\AbstractTerrainGenerator.cs                           | C#          |         85 |         41 |         24 |        150 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Agent.cs                                              | C#          |         82 |          0 |         25 |        107 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\AgentTask.cs                                          | C#          |          9 |          0 |          2 |         11 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Area.cs                                               | C#          |         54 |          6 |         15 |         75 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\BatchRenderer.cs                                      | C#          |         62 |          3 |         14 |         79 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Boid.cs                                               | C#          |         63 |          2 |         13 |         78 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\CameraController.cs                                   | C#          |         54 |          4 |         15 |         73 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\CharacterControllerTest.cs                            | C#          |         30 |          4 |         11 |         45 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Chunk.cs                                              | C#          |        256 |        151 |         56 |        463 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\CliffDecorations.cs                                   | C#          |         44 |          3 |         11 |         58 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\CollisionTest.cs                                      | C#          |        239 |          7 |         57 |        303 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Decorations.cs                                        | C#          |        115 |          8 |         31 |        154 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Dialogue.cs                                           | C#          |        187 |         23 |         38 |        248 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\IHeightMap.cs                                         | C#          |          7 |          0 |          3 |         10 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\IOnValidateListener.cs                                | C#          |          7 |          1 |          2 |         10 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Map.cs                                                | C#          |        184 |         25 |         32 |        241 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\MapGeneratorBase.cs                                   | C#          |        626 |         77 |        163 |        866 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Node.cs                                               | C#          |         14 |          0 |          3 |         17 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\NoiseSettings.cs                                      | C#          |         55 |          0 |         12 |         67 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\PerlinNoise.cs                                        | C#          |         43 |          0 |          8 |         51 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Ramp.cs                                               | C#          |         56 |          0 |         10 |         66 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\RandomTransform.cs                                    | C#          |         92 |          0 |         13 |        105 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\ScriptElementPatterns.cs                              | C#          |         69 |          2 |         14 |         85 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\TerrainGenerationSettings.cs                          | C#          |         26 |          0 |          5 |         31 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\DEMO\Scripts\Waypoint.cs                                           | C#          |         37 |          3 |          9 |         49 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Extensions\ScreenCast.cs                                           | C#          |         61 |          0 |         15 |         76 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Extensions\SerializableDictionary.cs                               | C#          |         50 |          2 |         10 |         62 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Extensions\SerializableHashSet.cs                                  | C#          |         28 |          2 |          7 |         37 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Extensions\VectorExtensions.cs                                     | C#          |         55 |          7 |         15 |         77 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\IAgent.cs                                               | C#          |         10 |         23 |          6 |         39 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\IGraph.cs                                               | C#          |         10 |          0 |          2 |         12 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\IPath.cs                                                | C#          |         12 |          0 |          2 |         14 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\Obstruction.cs                                          | C#          |        127 |         25 |         32 |        184 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\ObstructionArray.cs                                     | C#          |         47 |          0 |          9 |         56 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\ObstructionList.cs                                      | C#          |         20 |          0 |          4 |         24 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\ObstructionRect.cs                                      | C#          |         28 |          0 |          9 |         37 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\ObstructionSet.cs                                       | C#          |         24 |          0 |          5 |         29 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\PriorityQueue.cs                                        | C#          |         60 |          1 |         11 |         72 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\Search.cs                                               | C#          |        186 |          1 |         57 |        244 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Navigation\VoxelTraversal.cs                                       | C#          |        190 |          7 |         46 |        243 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Toon\Scripts\PostProcessingEffect.cs                               | C#          |         19 |          0 |          5 |         24 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Toon\Shaders\CustomTessellation.cginc                              | UnityShader |         61 |          4 |         12 |         77 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Toon\Shaders\Grass.shader                                          | UnityShader |        219 |         31 |         69 |        319 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Toon\Shaders\Pixelated.shader                                      | UnityShader |         79 |          9 |         20 |        108 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Toon\Shaders\Solid.shader                                          | UnityShader |         62 |          0 |         12 |         74 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Toon\Shaders\Terrain.shader                                        | UnityShader |         67 |          0 |         15 |         82 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\Toon\Shaders\Textured.shader                                       | UnityShader |         68 |          0 |         10 |         78 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Assets\danzabarr\pxl-UI\Scripts\DialogueBox.cs                                      | C#          |        135 |         54 |         31 |        220 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Packages\manifest.json                                                              | JSON        |         45 |          0 |          1 |         46 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\Packages\packages-lock.json                                                         | JSON        |        430 |          0 |          1 |        431 |
+| c:\Users\Dan\Dev\Unity Projects\MultiUnitPathfinding\README.md                                                                           | Markdown    |          1 |          0 |          2 |          3 |
+| Total                                                                                                                                    |             |      8,049 |        711 |      1,822 |     10,582 |
++------------------------------------------------------------------------------------------------------------------------------------------+-------------+------------+------------+------------+------------+

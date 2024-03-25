@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: Script Element Patterns
+  m_EditorClassIdentifier: Assembly-CSharp::ScriptElementPatterns
+  source: "ACTOR <actor>\nFACE <object>\n\nLINE <text>\nPROMPT <key> <text>                      
+    // prompts with the text and maps the key to the response \nOPTION <key> <value>
+    <text>          // when selected, maps the key to the value supplied\nANIMATION
+    <trigger>\nTASK <function> <arguments>\n\nWAIT <time>\n\nPAUSE <process>\nRESUME
+    <process>\nABORT <process>\nAWAIT <process>\n\n\nLABEL <name>\nJUMP <label>\n\nJUMP_IF
+    <key> <value> <label>\nJUMP_IF_NOT <key> <value> <label>\n\nJUMP_IF <flag> <label>\nJUMP_IF_NOT
+    <flag> <label>\n\nFLAG <flag>              // maps the key to an empty string\nUNFLAG
+    <flag>         // removes the key and value\nUNMAP <key>          // removes
+    the value if the key exists\nMAP <key> <value> // adds or overwrites the key
+    value pair\n\nEND"
