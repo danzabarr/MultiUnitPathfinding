@@ -25,6 +25,7 @@ public class NoiseSettings : ScriptableObject
 
 	public static float Sample(int seed, float x, float y, float amplitude, float frequency, int octaves, float lacunarity, float persistence, AnimationCurve remap, float scale, float offset)
 	{
+		Random.State state = Random.state;
 		Random.InitState(seed);
 
 		x += (Random.value - 0.5f) * 100000;
@@ -40,6 +41,7 @@ public class NoiseSettings : ScriptableObject
 			sum += Mathf.PerlinNoise(x * frequency, y * frequency) * amplitude;
 		}
 
+		Random.state = state;
 
 		return remap.Evaluate(sum / range) * scale + offset;
 	}

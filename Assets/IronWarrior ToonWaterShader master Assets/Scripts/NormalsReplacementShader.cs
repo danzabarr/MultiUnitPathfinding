@@ -6,7 +6,7 @@ public class NormalsReplacementShader : MonoBehaviour
     Shader normalsShader;
 
     private RenderTexture renderTexture;
-    private new Camera camera;
+    private Camera cam;
 
     private void Start()
     {
@@ -19,11 +19,11 @@ public class NormalsReplacementShader : MonoBehaviour
 
         // Setup a copy of the camera to render the scene using the normals shader.
         GameObject copy = new GameObject("Normals camera");
-        camera = copy.AddComponent<Camera>();
-        camera.CopyFrom(thisCamera);
-        camera.transform.SetParent(transform);
-        camera.targetTexture = renderTexture;
-        camera.SetReplacementShader(normalsShader, "RenderType");
-        camera.depth = thisCamera.depth - 1;
+        cam = copy.AddComponent<Camera>();
+        cam.CopyFrom(thisCamera);
+        cam.transform.SetParent(transform);
+        cam.targetTexture = renderTexture;
+        cam.SetReplacementShader(normalsShader, "RenderType");
+        cam.depth = thisCamera.depth - 1;
     }
 }

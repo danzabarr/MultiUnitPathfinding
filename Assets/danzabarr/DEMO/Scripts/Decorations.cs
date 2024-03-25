@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.UIElements;
 using UnityEngine;
 
 [System.Flags]
@@ -23,7 +21,9 @@ public class Decoration
     public Placement placement;
     public float density;
     public Mesh mesh;
-    public RandomTransform offset;public bool IsSet(Placement flagToCheck)
+    public RandomTransform offset;
+    
+    public bool IsSet(Placement flagToCheck)
     {
         return (placement & flagToCheck) != 0;
     }
@@ -48,7 +48,7 @@ public class Decorations : MonoBehaviour
     public Decoration[] decorations;
 
     private Chunk chunk;
-	private SerializableDictionary<Mesh, Matrix4x4[]> matrices;
+	[SerializeField] private SerializableDictionary<Mesh, Matrix4x4[]> matrices;
 
     public static int ObstructionType(Placement placement)
     {
@@ -99,53 +99,40 @@ public class Decorations : MonoBehaviour
         chunk = GetComponent<Chunk>();
         matrices = new SerializableDictionary<Mesh, Matrix4x4[]>();
 
-        float sum_density = 0;
+        HashSet<Vector2Int> set = new HashSet<Vector2Int>();
+
         foreach (Decoration decoration in decorations)
-            sum_density += decoration.density;
-        sum_density = Mathf.Max(sum_density, 1);
-
-        Random.InitState(chunk.chunkPosition.x * 1000 + chunk.chunkPosition.y);
-
-        for (int i = 0; i < chunk.size.x * chunk.size.y; i++)
         {
-            int x = i % chunk.size.x;
-            int z = i / chunk.size.x;
+            if (decoration.mesh == null)
+                continue;
 
-            float randomValue = Random.value * sum_density;
+            List<Matrix4x4> matrixList = new List<Matrix4x4>();
 
-            foreach (Decoration decoration in decorations)
+            for (int x = 0; x < chunk.size.x; x++)
             {
-                float density = decoration.density;
-
-                if (randomValue > density)
+                for (int y = 0; y < chunk.size.y; y++)
                 {
-                    randomValue -= density;
-                    continue;
+                    if (set.Contains(new Vector2Int(x, y)))
+                        continue;
+
+                    if (!decoration.IsSet(PlacementType(chunk.GetPermanentObstructionType(x, y))))
+                        continue;
+
+                    if (Random.value > decoration.density)
+                        continue;
+
+                    Vector2Int tile = new Vector2Int(x, y) + chunk.chunkPosition * chunk.size;
+                    
+                    //Apply the scale and rotation locally, then translate to the world position
+                    Matrix4x4 matrix = Matrix4x4.Translate(chunk.OnGround(tile.X0Y())) * decoration.offset.GenerateMatrix();
+                    matrixList.Add(matrix);
+                    set.Add(tile);
                 }
-
-                Placement tileType = PlacementType(chunk.GetPermanentObstructionType(x, z));
-
-                if (!decoration.IsSet(tileType))
-                    continue;
-
-                
-                Vector3 position = new Vector3(x, 0, z) + (chunk.chunkPosition * chunk.size).X0Y();
-                position = chunk.OnGround(position);
-
-                Matrix4x4 matrix = Matrix4x4.Translate(position);
-                matrix *= decoration.offset.GenerateMatrix();
-
-                Mesh mesh = decoration.mesh;
-                if (!matrices.ContainsKey(mesh))
-                    matrices.Add(mesh, new Matrix4x4[0]);
-
-                List<Matrix4x4> newMatrices = new List<Matrix4x4>(matrices[mesh]);
-                newMatrices.Add(matrix);
-                matrices[mesh] = newMatrices.ToArray();
-
-                break;
             }
+
+            matrices[decoration.mesh] = matrixList.ToArray();
         }
+        
     }
 
     public void Update()
@@ -156,7 +143,13 @@ public class Decorations : MonoBehaviour
         MaterialPropertyBlock properties = new MaterialPropertyBlock();
 
         foreach (KeyValuePair<Mesh, Matrix4x4[]> pair in matrices)
-            //Graphics.DrawMeshInstanced(pair.Key, 0, material, pair.Value);
+        {
+            // null checks
+            if (pair.Key == null || pair.Value == null)
+                continue;
+
             Graphics.DrawMeshInstanced(pair.Key, 0, material, pair.Value, pair.Value.Length, properties, UnityEngine.Rendering.ShadowCastingMode.On, true, layer);
+        }
+            //Graphics.DrawMeshInstanced(pair.Key, 0, material, pair.Value);
     }
 }

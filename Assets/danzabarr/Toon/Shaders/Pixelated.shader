@@ -98,10 +98,8 @@ Shader "Toon/Pixelated"
                 float3 worldPos = rayUnitDepth * sceneZ + _WorldSpaceCameraPos;
             
                 //col.rgb = worldPos.xyz;
-            
                 
-                
-                if (worldPos.y > _EdgeMinimumAltitude)
+                //if (worldPos.y > _EdgeMinimumAltitude)
                 {
                     float nDepth = tex2D(_CameraDepthTexture, pixelUV + n).r;
                     float eDepth = tex2D(_CameraDepthTexture, pixelUV + e).r;

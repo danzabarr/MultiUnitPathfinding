@@ -45,6 +45,7 @@ namespace Supercyan.FreeSample
 
         private List<Collider> m_collisions = new List<Collider>();
 
+
         private void Awake()
         {
             if (!m_animator) { gameObject.GetComponent<Animator>(); }
@@ -105,17 +106,62 @@ namespace Supercyan.FreeSample
             }
             if (m_collisions.Count == 0) { m_isGrounded = false; }
         }
+        private Map map;
+        private bool m_Resetting = false;
+        private Vector3 lastSafePosition;
+        private Vector3 resetPosition; 
 
         private void Update()
         {
+            if (m_Resetting)
+            {
+                // parabolic arc to reset position
+                float t = (Time.time - m_jumpTimeStamp) / 0.5f;
+                if (t > 1)
+                {
+                    m_Resetting = false;
+                    transform.position = lastSafePosition;
+                    m_rigidBody.velocity = Vector3.zero;
+                }
+                else
+                {
+                    transform.position = Vector3.Lerp(resetPosition, lastSafePosition, t) + Vector3.up * 0.5f * Mathf.Sin(t * Mathf.PI);
+                    return;
+                }
+            }
+
             if (!m_jumpInput && Input.GetKey(KeyCode.Space))
             {
                 m_jumpInput = true;
+            }
+
+            if (m_isGrounded && transform.position.y > 0)
+            {
+                if (map == null) map = FindObjectOfType<Map>();
+                if (map != null)
+                {
+                    Vector2Int tile = transform.position.ToTileCoord();
+                    if (map.IsAccessible(tile))
+                    {
+                        // snap to tile
+                        lastSafePosition = transform.position.ToTileCoord().X0Y() + Vector3.up * transform.position.y;
+                    }
+                }
+            }
+
+            if (transform.position.y < -1 && !m_Resetting)
+            {
+                m_rigidBody.velocity = Vector3.zero;
+                m_Resetting = true;
+                resetPosition = transform.position;
+                m_jumpTimeStamp = Time.time;
             }
         }
 
         private void FixedUpdate()
         {
+            if (m_Resetting)
+                return;
             m_animator.SetBool("Grounded", m_isGrounded);
 
             switch (m_controlMode)

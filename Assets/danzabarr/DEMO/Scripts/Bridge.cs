@@ -21,4 +21,12 @@ public class Bridge
             Object.Destroy(piece);
         #endif
     }
+
+    public bool Contains(Vector2Int tile)
+    {
+        if (orientation == Orientation.HORIZONTAL)
+            return tile.x >= start.x && tile.x < start.x + length && tile.y == start.y;
+        else
+            return tile.y >= start.y && tile.y < start.y + length && tile.x == start.x;
+    }
 }

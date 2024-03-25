@@ -45,6 +45,13 @@ public class Map : MapGeneratorBase
 			mouseChunkCoord = mouseTile.ToChunkCoord(chunkSize);
 			mouseArea = GetArea(mouseTile.x, mouseTile.y);
 		
+			if (Input.GetMouseButtonDown(0))
+			{
+				Vector2Int local = mouseTile - mouseChunk.chunkPosition * chunkSize;
+				mouseChunk.SetBridge(local.x, local.y);
+			}
+				
+
 			if (Input.GetMouseButtonDown(0) && selected != null)
 			{
 				selected.SetPath(AStar(selected.transform.position, hit.point));
@@ -71,21 +78,15 @@ public class Map : MapGeneratorBase
 		}
 	}
 
+#if UNITY_EDITOR
 	void OnDrawGizmos()
 	{
-		Waypoint wp1 = GameObject.Find("Waypoint")?.GetComponent<Waypoint>();
-		Waypoint wp2 = GameObject.Find("Waypoint (1)")?.GetComponent<Waypoint>();
-		
-
-		if (wp1 != null && wp2 != null)
+		Gizmos.color = Color.red;
+		foreach (Waypoint waypoint in FindObjectsOfType<Waypoint>())
 		{
-			Gizmos.color = Color.red;
-			Gizmos.DrawSphere(wp1.transform.position, 0.25f);
-			Gizmos.DrawLine(wp1.transform.position, wp1.Node.position);
-
-			List<Node> path = AStar(wp1.Node, wp2.Node);
-			if (path != null)
-				DrawPath(path);
+			Node node = waypoint.Node;
+			foreach (Node neighbour in Neighbours(node))
+				Gizmos.DrawLine(node.position, neighbour.position);
 		}
 
 		if (drawCliffs)
@@ -135,6 +136,9 @@ public class Map : MapGeneratorBase
 				//	areaIndex %= areas.Count;
 				//	mouseArea = areas[areaIndex];
 
+				if (area == null)
+					continue;
+
 				if (drawAreas && area.Tiles != null)
 				{
 					Gizmos.color = Color.HSVToRGB((float)i / areas.Count, 1f, 1f);
@@ -167,7 +171,7 @@ public class Map : MapGeneratorBase
 							foreach (var pair in adjacency)
 							{
 								Node n = pair.Key;
-								SerializableDictionary<Node, float> dictionary = pair.Value;
+								Dictionary<Node, float> dictionary = pair.Value;
 								foreach (var pair2 in dictionary)
 								{
 									Node n2 = pair2.Key;
@@ -252,4 +256,5 @@ public class Map : MapGeneratorBase
 			}
 		}
 	}
+#endif
 }

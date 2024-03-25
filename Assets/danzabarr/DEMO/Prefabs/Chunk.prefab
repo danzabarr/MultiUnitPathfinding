@@ -121,7 +121,7 @@ MonoBehaviour:
       scaleMin: {x: 3, y: 3, z: 3}
       scaleMax: {x: 3, y: 3, z: 3}
   - placement: 1
-    density: 0.05
+    density: 0.03
     mesh: {fileID: 4300000, guid: 2ef20853860a4694c9c08c312d121b56, type: 3}
     offset:
       offsetMin: {x: 0, y: 0, z: 0}
@@ -130,8 +130,8 @@ MonoBehaviour:
       rotationMax: {x: 0, y: 360, z: 0}
       scaleMin: {x: 1, y: 1, z: 1}
       scaleMax: {x: 1, y: 1, z: 1}
-  - placement: 1
-    density: 0.1
+  - placement: 11
+    density: 0.05
     mesh: {fileID: 4300000, guid: c191cc4231bc1a940986671275027664, type: 3}
     offset:
       offsetMin: {x: 0, y: 0, z: 0}
@@ -140,6 +140,8 @@ MonoBehaviour:
       rotationMax: {x: 0, y: 360, z: 0}
       scaleMin: {x: 1, y: 1, z: 1}
       scaleMax: {x: 1, y: 1, z: 1}
+  matrices:
+    keys: []
 --- !u!33 &3749220943619411507
 MeshFilter:
   m_ObjectHideFlags: 0

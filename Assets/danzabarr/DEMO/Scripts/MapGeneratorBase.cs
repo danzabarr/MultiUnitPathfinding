@@ -25,12 +25,16 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 	public int chunkSize;
 
 	[Header("Generated Data")]
+	 
+	[SerializeField] protected SerializableDictionary<Vector2Int, Chunk> chunks = new SerializableDictionary<Vector2Int, Chunk>();
+	[SerializeField] protected List<Area> areas = new List<Area>();
+	[SerializeField] protected List<Ramp> ramps = new List<Ramp>();
+	[SerializeField] protected List<AbstractObstruction> obstructions = new List<AbstractObstruction>();
 	
-	protected SerializableDictionary<Vector2Int, Chunk> chunks;
-	protected List<Area> areas = new List<Area>();
-	protected List<Ramp> ramps = new List<Ramp>();
-	protected List<AbstractObstruction> obstructions = new List<AbstractObstruction>();
-	protected SerializableDictionary<Node, SerializableDictionary<Node, float>> adjacency = new SerializableDictionary<Node, SerializableDictionary<Node, float>>();
+
+	// this is a big boy
+	protected Dictionary<Node, Dictionary<Node, float>> adjacency = new Dictionary<Node, Dictionary<Node, float>>();
+	
 	void Start()
 	{
 		Regenerate();
@@ -50,6 +54,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		Debug.Log("----- Regenerating -----");
 		DeleteAll();
 		CreateChunks();
+		IdentifyObstructions();
 		IdentifyAreas();
 		IdentifyRamps();
 		IdentifyBridges();
@@ -76,10 +81,11 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 			foreach (var chunk in chunks)
 				if (chunk.Value != null)
 					DestroyImmediate(chunk.Value.gameObject);
-
+ 
 		for (int i = transform.childCount - 1; i >= 0; i--)
 			DestroyImmediate(transform.GetChild(i).gameObject);
 
+		DeleteBridges();
 		chunks?.Clear();
 		areas?.Clear();
 		ramps?.Clear();
@@ -109,6 +115,12 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		}
 
 		bridges.Clear();
+	}
+
+	void IdentifyObstructions()
+	{
+		foreach (AbstractObstruction obstruction in FindObjectsOfType<AbstractObstruction>())
+			AddObstruction(obstruction);
 	}
 
 	/// <summary>
@@ -200,8 +212,6 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 			return false;
 		}
 
-		
-
 		Bridge TryAddBridge(Vector2Int tile, Vector2Int dir)
 		{
 			if (sites.Contains(tile))
@@ -209,8 +219,6 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 
 			if (ValidSite(tile, dir, out int length))
 			{
-				
-
 				for (int i = 0; i <= length; i++)
 				{
 					Vector2Int bridgeTile = tile + dir * i;
@@ -362,9 +370,6 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 
 			// Push the updates
 
-			foreach (var (chunk, list) in updates)
-				chunk.UpdateVertices(list);
-
 			for (int i = 0; i <= length; i++)
 			{
 				Vector2Int bridgeTile = tile + dir * i;
@@ -372,7 +377,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 				Vector2Int chunkCoord = bridgeTile.ToChunkCoord(chunkSize);
 				if (TryGetChunk(chunkCoord, out Chunk chunk))
 				{
-					Vector2Int localPosition = bridgeTile - chunkCoord * chunkSize;
+					Vector2Int localPosition = bridgeTile - chunk.chunkPosition * chunkSize;
 					chunk.SetBridge(localPosition.x, localPosition.y);
 				}
 
@@ -381,11 +386,12 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 				go.transform.forward = new Vector3(dir.x, 0, dir.y);
 				bridge.pieces.Add(go);
 			}
+
+			foreach (var (chunk, list) in updates)
+				chunk.UpdateVertices(list);
 		}
 
-		foreach (Bridge bridge in bridges)
-			bridge.Delete();
-		bridges.Clear();
+		
 
 		List<Bridge> selection = SelectBridges(tentativeBridges);
 		foreach (Bridge bridge in selection)
@@ -668,10 +674,11 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 
 	void RecalculateConnections(Area area)
 	{
-		foreach(Node node in area.Nodes)
+		List<Node> nodes = new List<Node>(area.Nodes);
+		foreach(Node node in nodes)
 			RemoveNode(node);
 
-		foreach(Node node in area.Nodes)
+		foreach(Node node in nodes)
 			AddNode(node);
 	}
 
@@ -858,11 +865,15 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 
 	public bool IsAccessible(Vector2Int tile)
 	{
+		foreach (AbstractObstruction obstruction in obstructions)
+			if (obstruction.Contains(tile))
+				return false;
+
 		Vector2Int chunkCoord = tile.ToChunkCoord(chunkSize);
 		if (TryGetChunk(chunkCoord, out Chunk chunk))
 		{
 			tile -= chunkCoord * chunkSize;
-			return chunk.GetPermanentObstructionType(tile.x, tile.y) >= -1;
+			return chunk.GetPermanentObstructionType(tile.x, tile.y) >= Chunk.BRIDGE;
 		}
 
 		return false;
@@ -881,8 +892,20 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		return false;
 	}
 
-	
-	protected Area GetArea(int id)
+	protected bool TryGetBridge(Vector2Int tile, out Bridge bridge)
+	{
+		foreach (Bridge b in bridges)
+			if (b.Contains(tile))
+			{
+				bridge = b;
+				return true;
+			}
+
+		bridge = null;
+		return false;
+	}
+
+	public Area GetArea(int id)
 	{
 		foreach (Area area in areas)
 			if (area.ID == id)
@@ -890,7 +913,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		return null;
 	}
 
-	protected Area GetArea(int x, int y)
+	public Area GetArea(int x, int y)
 	{
 		foreach (Area area in areas)
 			if (area.Contains(x, y))
@@ -944,6 +967,30 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		return null;
 	}
 
+	private bool AddNodeOnRamp(Node node)
+	{
+		int o = GetPermanentObstructionType(node.tile);
+
+		if (o != Chunk.RAMP)
+			return false;
+		
+		if (!TryGetRamp(node.tile, out Ramp ramp))
+			return false;
+	
+		Connect(node, ramp.n00);
+		Connect(node, ramp.n01);
+
+		if (ramp.n10 != null)
+			Connect(node, ramp.n10);
+
+		if (ramp.n11 != null)
+			Connect(node, ramp.n11);
+
+		// now find all other waypoint nodes on the ramp
+
+		return true;
+	}
+
 	protected bool AddNode(Node node)
 	{
 		if (node == null)
@@ -951,7 +998,41 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		
 		Area area = GetArea(node.area);
 		if (area == null)
+		{
+			// we are likely on a ramp or a bridge
+
+			int o = GetPermanentObstructionType(node.tile);
+
+			if (o == Chunk.RAMP)
+			{
+				if (!TryGetRamp(node.tile, out Ramp ramp))
+					return false;
+			
+				Connect(node, ramp.n00);
+				Connect(node, ramp.n01);
+
+				if (ramp.n10 != null)
+					Connect(node, ramp.n10);
+
+				if (ramp.n11 != null)
+					Connect(node, ramp.n11);
+
+				return true;
+			}
+
+			else if (o == Chunk.BRIDGE)
+			{
+				if (!TryGetBridge(node.tile, out Bridge bridge))
+					return false;
+
+				Connect(node, bridge.n0);
+				Connect(node, bridge.n1);
+				
+				return true;
+			}
+
 			return false;
+		}
 
 		foreach (Node existing in area.Nodes)
 		{
@@ -1005,9 +1086,9 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 
 	protected void Connect(Node from, Node to, float cost)
 	{
-		if (!adjacency.TryGetValue(from, out SerializableDictionary<Node, float> dictionary))
+		if (!adjacency.TryGetValue(from, out Dictionary<Node, float> dictionary))
 		{
-			dictionary = new SerializableDictionary<Node, float>();
+			dictionary = new Dictionary<Node, float>();
 			adjacency[from] = dictionary;
 		}
 		dictionary[to] = cost;
@@ -1023,7 +1104,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 
 	protected void Disconnect(Node a, Node b)
 	{
-		SerializableDictionary<Node, float> dictionary;
+		Dictionary<Node, float> dictionary;
 
 		if (adjacency.TryGetValue(a, out dictionary))
 		{
@@ -1042,15 +1123,20 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 
 	public IEnumerable<Node> Neighbours(Node current)
 	{
-		if (adjacency.TryGetValue(current, out SerializableDictionary<Node, float> dictionary))
+		if (adjacency.TryGetValue(current, out Dictionary<Node, float> dictionary))
 			return dictionary.Keys;
 
 		return new List<Node>();
 	}
 
+	public int NeighbourCount(Node current)
+	{
+		return adjacency.TryGetValue(current, out Dictionary<Node, float> dictionary) ? dictionary.Count : 0;
+	}
+
 	public float EdgeCost(Node current, Node next)
 	{
-		if (adjacency.TryGetValue(current, out SerializableDictionary<Node, float> dictionary))
+		if (adjacency.TryGetValue(current, out Dictionary<Node, float> dictionary))
 			return dictionary.GetValueOrDefault(next, float.PositiveInfinity);
 
 		return float.PositiveInfinity;
@@ -1101,6 +1187,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 			if (!allowOverRamps && TryGetRamp(node, out Ramp ramp))
 				return true;
 
+
 			return !IsAccessible(node);
 		});
 	}
@@ -1126,7 +1213,6 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		// we could be on a ramp
 		else if (TryGetRamp(tile, out Ramp ramp))
 		{
-			Debug.Log("On ramp");
 			foreach (Node node in ramp.Nodes)
 				Connect(temp, node, false);
 		}

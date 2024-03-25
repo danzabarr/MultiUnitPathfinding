@@ -1,7 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEditor;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 /// <summary>
@@ -26,7 +25,7 @@ public class Chunk : AbstractTerrainGenerator
 	public const int WATER = -4;
 	public const int OUT_OF_BOUNDS = -5;
 
-	private int[] permanentObstructions;
+	[SerializeField] private int[] permanentObstructions;
 	
 	//TODO:
 	public bool smoothShading = true;
@@ -56,9 +55,11 @@ public class Chunk : AbstractTerrainGenerator
 	}
 
 	[ContextMenu("Create Overhead Camera")]
-	public void SetupOverheadCamera()
+	public void SetupOverheadCamera() 
 	{
+		int textureScale = 2;
 		overheadCamera = new GameObject("Overhead Camera").AddComponent<Camera>();
+		overheadCamera.AddComponent<CameraThrottle>();
 		overheadCamera.transform.parent = transform;
 		overheadCamera.transform.localPosition = new Vector3(size.x / 2, 100, size.y / 2);
 		overheadCamera.transform.rotation = Quaternion.Euler(90, 0, 0);
@@ -66,17 +67,19 @@ public class Chunk : AbstractTerrainGenerator
 		overheadCamera.orthographicSize = size.x / 2;
 		overheadCamera.nearClipPlane = 0.1f;
 		overheadCamera.farClipPlane = 200;
-		overheadCamera.targetTexture = new RenderTexture(size.x, size.y, 24);
+		overheadCamera.targetTexture = new RenderTexture(size.x * textureScale, size.y * textureScale, 24);
 		overheadCamera.cullingMask = 1 << LayerMask.NameToLayer("Overhead Camera");
 		overheadCamera.clearFlags = CameraClearFlags.SolidColor;
 		overheadCamera.backgroundColor = Color.white;
-		//overheadCamera.enabled = false;
+		overheadCamera.enabled = false;
+		overheadCamera.Render();
+		overheadCamera.clearFlags = CameraClearFlags.Nothing;
 	}
 
 	[ContextMenu("Regenerate Decorations")]
 	public void RegenerateDecorations()
 	{		
-		Random.InitState(chunkPosition.x * 2000 + chunkPosition.y);
+		Random.InitState(chunkPosition.x * 2000 + chunkPosition.y - 1000);
 		foreach (Decorations decorations in GetComponents<Decorations>())
 			decorations.Regenerate();
 	}
@@ -106,9 +109,10 @@ public class Chunk : AbstractTerrainGenerator
 
 	public void SetBridge(int x, int z)
 	{
+		Debug.Log($"Set bridge at {x}, {z}");
 		if (x < 0 || x >= size.x || z < 0 || z >= size.y)
 			return;
-			
+
 		permanentObstructions[x + z * size.x] = BRIDGE;
 	}
 
@@ -134,7 +138,6 @@ public class Chunk : AbstractTerrainGenerator
 
 	public override void OnVertexUpdate()
 	{
-
 		// We just want to fix the quads here so that the shortest diagonal is used for triangulation
 
 		Vector3[] vertices = mesh.vertices;
@@ -144,23 +147,6 @@ public class Chunk : AbstractTerrainGenerator
 		{
 			for (int x = 0; x < size.x; x++, ti += 6, vi++)
 			{
-				/* Don't need to do this here
-				float minHeight = Mathf.Min(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
-				float maxHeight = Mathf.Max(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
-				if (maxHeight - minHeight > 0.01f)
-				{
-					cliffs[x + y * size.x] = true;
-					increments[x + y * size.x] = -1;
-				}
-
-				if (terrainSettings.snapIncrement > 0)
-				{
-					int increment = Mathf.RoundToInt(minHeight / terrainSettings.snapIncrement);
-					increments[x + y * size.x] = increment;
-				}
-				*/
-				// rotate the triangles so that the diagonal is shortest
-
 				Vector3 v00 = vertices[vi];
 				Vector3 v10 = vertices[vi + 1];
 				Vector3 v01 = vertices[vi + size.x + 1];
@@ -220,33 +206,30 @@ public class Chunk : AbstractTerrainGenerator
 			}
 		}
 
-		//cliffs = new bool[size.x * size.y];
-		permanentObstructions = new int[size.x * size.y];
-		//increments = new int[size.x * size.y];
+		if (permanentObstructions == null || permanentObstructions.Length != size.x * size.y)
+			permanentObstructions = new int[size.x * size.y];
 
 		for (int ti = 0, vi = 0, y = 0; y < size.y; y++, vi++)
 		{
 			for (int x = 0; x < size.x; x++, ti += 6, vi++)
 			{
+				if (permanentObstructions[x + y * size.x] == BRIDGE)
+					continue;
+					
+				if (permanentObstructions[x + y * size.x] == RAMP)
+					continue;
 
 				float minHeight = Mathf.Min(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
 				float maxHeight = Mathf.Max(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
 
 				if (maxHeight - minHeight > 0.01f)
 					permanentObstructions[x + y * size.x] = CLIFF;
-				//cliffs[x + y * size.x] = true;
-				//increments[x + y * size.x] = -1;
+
 				else if (minHeight < 0)
 					permanentObstructions[x + y * size.x] = WATER;
 
 				else
 					permanentObstructions[x + y * size.x] = Mathf.RoundToInt(minHeight / terrainSettings.snapIncrement);
-
-				if (terrainSettings.snapIncrement > 0)
-				{
-					int increment = Mathf.RoundToInt(minHeight / terrainSettings.snapIncrement);
-					//increments[x + y * size.x] = increment;
-				}
 
 				// rotate the triangles so that the diagonal is shortest
 
@@ -323,121 +306,11 @@ public class Chunk : AbstractTerrainGenerator
 				normals[i] = (sum / tempNormals[i].Count).normalized;
 			}
 		}
-
-		/*
-
-		// TODO this needs moving to a separate system for finding areas across chunks
-		areaCount = 0;
-		for (int x = 0; x < size.x; x++)
-		{
-			for (int y = 0; y < size.y; y++)
-			{
-				if (tiles[x + y * size.x] != UNVISITED)
-					continue;
-
-				Queue<int> queue = new Queue<int>();
-				queue.Enqueue(x + y * size.x);
-				tiles[x + y * size.x] = ++areaCount;
-				Vector2Int tile = new Vector2Int(x, y);
-
-				//Area mouseArea = new Area(areas.Count + 1);
-				//mouseArea.AddNode(tile, OnGround(tile.X0Y()));
-				//void AddNode(int x, int y) => mouseArea.AddNode(new Vector2Int(x, y), OnGround(new Vector3(x, 0, y)));
-
-				while (queue.Count > 0)
-				{
-					int current = queue.Dequeue();
-					int cx = current % size.x;
-					int cy = current / size.x;
-
-					if (cx < size.x - 1 && tiles[cx + 1 + cy * size.x] == UNVISITED)
-					{
-						queue.Enqueue(cx + 1 + cy * size.x);
-						tiles[cx + 1 + cy * size.x] = tiles[current];
-						//AddNode(x + 1, y);
-					}
-
-					if (cx > 0 && tiles[cx - 1 + cy * size.x] == UNVISITED)
-					{
-						queue.Enqueue(cx - 1 + cy * size.x);
-						tiles[cx - 1 + cy * size.x] = tiles[current];
-						//AddNode(x - 1, y);
-					}
-
-					if (cy < size.y - 1 && tiles[cx + (cy + 1) * size.x] == UNVISITED)
-					{
-						queue.Enqueue(cx + (cy + 1) * size.x);
-						tiles[cx + (cy + 1) * size.x] = tiles[current];
-						//AddNode(x, y + 1);
-					}
-
-					if (cy > 0 && tiles[cx + (cy - 1) * size.x] == UNVISITED)
-					{
-						queue.Enqueue(cx + (cy - 1) * size.x);
-						tiles[cx + (cy - 1) * size.x] = tiles[current];
-						//AddNode(x, y - 1);
-					}
-				}
-			}
-		}
-
-
-		// Identify corners
-		// TODO this needs moving to a separate system for finding areas across chunks
-		
-		//corners = new List<Vector3>();
-
-		for (int x = 0; x < size.x; x++)
-		{
-			for (int y = 0; y < size.y; y++)
-			{
-				int mouseArea = tiles[x + y * size.x];
-				
-				if (mouseArea == CLIFF)
-					continue;
-
-
-				for (int i = 0; i < 8; i += 2)
-				{
-					Vector2Int v0 = DIAGONAL_DIRECTIONS[(i + 0) % 8] + new Vector2Int(x, y);
-					Vector2Int v1 = DIAGONAL_DIRECTIONS[(i + 1) % 8] + new Vector2Int(x, y);
-					Vector2Int v2 = DIAGONAL_DIRECTIONS[(i + 2) % 8] + new Vector2Int(x, y);
-
-					int a0 = GetAreaCode(v0.x, v0.y);
-					int a1 = GetAreaCode(v1.x, v1.y);
-					int a2 = GetAreaCode(v2.x, v2.y);
-
-					if (a0 != mouseArea)
-						continue;
-
-					if (a2 != mouseArea)
-						continue;
-
-					if (a1 != CLIFF)
-						continue;
-
-					//Vector3 position = Vector3.Lerp(OnGround(new Vector3(x, 0, y) + ChunkOffset), OnGround(new Vector3(v1.x, 0, v1.y) + ChunkOffset), (0.5f - 0.5f * cornerDistance));
-					//corners.Add(position);
-					//areaCorners[x + y * size.x] = true;
-					AddNode(x, y, OnGround(new Vector3(x, 0, y) + ChunkOffset), mouseArea);
-				}
-
-				//if (
-				//	GetAreaCode(x + 1, y) != mouseArea || 
-				//	GetAreaCode(x - 1, y) != mouseArea || 
-				//	GetAreaCode(x, y + 1) != mouseArea || 
-				//	GetAreaCode(x, y - 1) != mouseArea
-				//)
-				//{
-				//	areaBoundaries[x + y * size.x] = true;
-				//}
-			}
-		}
-		*/
 	}
 
-	public bool drawGizmos = false;
+	public bool drawGizmos = false; 
 
+#if UNITY_EDITOR
 	public void OnDrawGizmosSelected()
 	{
 		if (drawGizmos)
@@ -464,6 +337,11 @@ public class Chunk : AbstractTerrainGenerator
 					Gizmos.color = Color.green;
 					Gizmos.DrawSphere(position, 0.1f);
 				}
+				else if (increment == BRIDGE)
+				{
+					Gizmos.color = Color.yellow;
+					Gizmos.DrawSphere(position, 0.5f);
+				}
 				else
 				{
 					Handles.Label(position, increment.ToString());
@@ -471,4 +349,6 @@ public class Chunk : AbstractTerrainGenerator
 			}
 		}
 	}
+#endif
+
 }

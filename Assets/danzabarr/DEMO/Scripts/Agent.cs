@@ -5,11 +5,17 @@ using UnityEngine;
 
 public class Agent : Waypoint, IAgent<Node>
 {
-	private Map map; // cached reference
-
 	private List<Node> path = new List<Node>();
 
+	private Animator animator;
+
 	public float speed = 1;
+	public float rotationSpeed = 1;
+
+	public void Awake()
+	{
+		animator = GetComponent<Animator>();
+	}
 
 	public override void Update()
 	{
@@ -20,9 +26,15 @@ public class Agent : Waypoint, IAgent<Node>
 			Node next = GetNext();
 			Vector3 direction = (next.position - transform.position).normalized;
 			transform.position += direction * speed * Time.deltaTime;
-
+			Quaternion targetRotation = Quaternion.AngleAxis(Vector3.SignedAngle(Vector3.forward, direction, Vector3.up), Vector3.up);
+			transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+			if (animator) animator.SetTrigger("Walk");
 			if (Vector3.Distance(transform.position, next.position) < 0.1f)
 				Pop();
+		}
+		else
+		{
+			if (animator) animator.SetTrigger("Idle_A");
 		}
 	}
 
@@ -89,7 +101,7 @@ public class Agent : Waypoint, IAgent<Node>
 			map = FindObjectOfType<Map>();
 
 		if (map != null)
-			SetPath(map.AStar(Node, goal.position));
+			SetPath(map.AStar(Node, goal));
 	}
 
 	public void PathTo(string waypoint)

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,8 +7,8 @@ using UnityEngine;
 public class SerializableHashSet<T> : HashSet<T>, ISerializationCallbackReceiver
 {
 	[SerializeField]
-	private List<T> list = new List<T>();
-
+	public List<T> list = new List<T>();
+ 
 	public SerializableHashSet() { }
 
 	public SerializableHashSet(ICollection<T> collection)
@@ -30,7 +29,7 @@ public class SerializableHashSet<T> : HashSet<T>, ISerializationCallbackReceiver
 	public void OnAfterDeserialize()
 	{
 		Clear();
-		for (int i = 0; i < list.Count; i++)
-			Add(list[i]);
+		foreach (T item in list)
+			Add(item);
 	}
 }

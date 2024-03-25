@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 23228858995858358}
   - component: {fileID: 6844032351269749896}
   - component: {fileID: 4414789985812068736}
+  - component: {fileID: 4071810650842012101}
+  - component: {fileID: 8612572730252216538}
   m_Layer: 0
   m_Name: rpgpp_lt_building_03
   m_TagString: Untagged
@@ -127,3 +129,31 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 3.253912, y: 3.724871, z: 5.6207542}
   m_Center: {x: -4.6472425, y: 1.3565603, z: -1.0354848}
+--- !u!114 &4071810650842012101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1232766363669618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8158a0e76404f34ba6471fd27faa7fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  size: {x: 6, y: 6}
+  position: {x: -1, y: 0}
+--- !u!114 &8612572730252216538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1232766363669618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8158a0e76404f34ba6471fd27faa7fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  size: {x: 3, y: 5}
+  position: {x: 3, y: 0}

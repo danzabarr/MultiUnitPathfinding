@@ -6,12 +6,24 @@ using UnityEngine;
 [ExecuteAlways]
 public class Waypoint : MonoBehaviour
 {
-    private Map map; // cache the reference, there won't be too many waypoints
+    protected Map map; // cache the reference, there won't be too many waypoints
     public float threshold = 0.001f;
     private Node node = new Node(Vector2Int.zero, Vector3.zero, -1);
     public Node Node => node;
     public float GroundDistanceFromNode => node == null ? 0 : Vector3.Distance(transform.position.XZ(), node.position.XZ());
-    public bool NeedsUpdating => GroundDistanceFromNode > threshold;
+    public bool NeedsUpdating 
+    {   
+        get => GroundDistanceFromNode > threshold || forceUpdate;
+        set => forceUpdate = value;
+    }
+    private bool forceUpdate = false;
+
+    public bool IsOrphaned()
+    {
+        if (map == null)
+            map = FindObjectOfType<Map>();
+        return map.NeighbourCount(node) == 0;
+    }
 
     public void OnEnable()
     {
@@ -38,6 +50,8 @@ public class Waypoint : MonoBehaviour
 
         if (map != null && NeedsUpdating)
             map.UpdateWaypoint(this);
+
+        forceUpdate = false;
     }
 
     public void OnDrawGizmos()

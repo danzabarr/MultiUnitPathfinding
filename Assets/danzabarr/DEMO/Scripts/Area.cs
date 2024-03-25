@@ -13,7 +13,7 @@ public class Area
 
 	[SerializeField] private int id;
 	[SerializeField] private int increment;
-	[SerializeField] private SerializableHashSet<Vector2Int> tiles;
+	[SerializeField] private List<Vector2Int> tiles;
 	[SerializeField] private SerializableDictionary<Vector2Int, Node> nodes;
 	[SerializeField] private List<Ramp> ramps;
 
@@ -24,9 +24,9 @@ public class Area
 	public Area(int increment, ICollection<Vector2Int> tiles)
 	{
 		this.increment = increment;
-		this.tiles = new SerializableHashSet<Vector2Int>(tiles);
+		this.tiles = new List<Vector2Int>(tiles);
 		nodes = new SerializableDictionary<Vector2Int, Node>();
-		id = idCounter++;
+		id = idCounter++; 
 	}
 	
 	public Node GetNode(int x, int z)

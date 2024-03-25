@@ -19,8 +19,6 @@ public class RandomTransform
 
     public Matrix4x4 GenerateMatrix()
     {
-        Random.InitState(System.DateTime.Now.Millisecond);
-
         Vector3 T = new Vector3
         (
             Random.Range(offsetMin.x, offsetMax.x),

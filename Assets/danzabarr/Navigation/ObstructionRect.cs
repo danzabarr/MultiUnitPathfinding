@@ -7,6 +7,8 @@ public class ObstructionRect : AbstractObstruction
 
 	public override RectInt GetBoundingRectangle()
 	{
+		Vector2Int position = this.position + transform.position.ToTileCoord();
+		position -= size / 2;
 		return new RectInt(position.x, position.y, size.x, size.y);
 	}
 
@@ -24,7 +26,7 @@ public class ObstructionRect : AbstractObstruction
 	public void OnDrawGizmosSelected()
 	{
 		RectInt rect = GetBoundingRectangle();
-		Vector3 center = new Vector3(rect.x + rect.width / 2, 0, rect.y + rect.height / 2);
+		Vector3 center = new Vector3(rect.x + rect.width / 2f, 0, rect.y + rect.height / 2f);
 		Vector3 size = new Vector3(rect.width, 1, rect.height);
 		
 		Gizmos.color = Color.red;
