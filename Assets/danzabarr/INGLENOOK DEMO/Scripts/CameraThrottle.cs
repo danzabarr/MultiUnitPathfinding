@@ -14,7 +14,8 @@ public class CameraThrottle : MonoBehaviour
     void Start () 
     {
         cam = GetComponent<Camera>();
-        InvokeRepeating ("Render", ++delayStart, 1f / fps);
+        InvokeRepeating ("Render", delayStart, 1f / fps);
+        delayStart = (delayStart + 1) % 16;
     }
     
     void OnDestroy()

@@ -5,8 +5,16 @@ using UnityEngine.Profiling;
 
 public class Search 
 {
+	/* A* SEARCH */
+	/// <summary>
+	/// Delegate function which is passed into A* search and called at each visited node,
+	/// allowing the user to define a condition for breaking out of the search early.
+	/// </summary>
 	public delegate bool BreakCondition<Node>(Node current, float cost);
 
+	/// <summary>
+	/// A* search algorithm.
+	/// </summary>
 	public static List<Node> AStar<Node>(Node start, Node goal, IGraph<Node> graph, BreakCondition<Node> breakOn = null)
 	{
 		if (start == null || goal == null)
@@ -79,6 +87,11 @@ public class Search
 		return null;
 	}
 
+	/// <summary>
+	/// A* search from a start node to a list of goals.
+	/// Returns a tree of paths with the root at the start,
+	/// and branches reaching each accessible goal.
+	/// </summary>
 	public static Tree<Node> AStarTree<Node>(Node start, List<Node> goals, IGraph<Node> graph)
 	{
 		Tree<Node> root = new Tree<Node>(start);
@@ -113,39 +126,19 @@ public class Search
 		return root;
 	}
 
-	// TODO: Flood fill from multiple starts to a single goal, using a heuristic to select the path.
-	public static void FloodFill<Node>(List<Node> starts, Node goal, IGraph<Node> graph, BreakCondition<Node> breakOn)
-	{
-		Queue<Node> queue = new Queue<Node>();
-		foreach (Node start in starts)
-			queue.Enqueue(start);
 
-		Dictionary<Node, float> costs = new Dictionary<Node, float>();
-		foreach (Node start in starts)
-			costs[start] = 0;
+	/* FLOOD FILL */
 
-		while (queue.Count > 0)
-		{
-			Node current = queue.Dequeue();
-			float cost = costs[current];
+	/// <summary>
+	/// Simpler break condition function delegate.
+	/// 
+	/// </summary>
+	public delegate bool VisitNode(Vector2Int node, int steps);
 
-			if (breakOn(current, cost))
-				continue;
-
-			foreach (Node neighbour in graph.Neighbours(current))
-			{
-				float edgeCost = graph.EdgeCost(current, neighbour);
-				float newCost = cost + edgeCost;
-
-				if (!costs.ContainsKey(neighbour) || newCost < costs[neighbour])
-				{
-					costs[neighbour] = newCost;
-					queue.Enqueue(neighbour);
-				}
-			}
-		}
-	}
-
+ 
+	/// <summary>
+	/// 
+	/// </summary>
 	public static void FloodFill<Node>(Node start, IGraph<Node> graph, BreakCondition<Node> breakOn)
 	{
 		Queue<Node> queue = new Queue<Node>();
@@ -181,7 +174,41 @@ public class Search
 		}
 	}
 
-	public delegate bool VisitNode(Vector2Int node, int steps);
+	/// <summary>
+	/// 
+	/// </summary>
+	public static void FloodFill<Node>(List<Node> starts, Node goal, IGraph<Node> graph, BreakCondition<Node> breakOn)
+	{
+		Queue<Node> queue = new Queue<Node>();
+		foreach (Node start in starts)
+			queue.Enqueue(start);
+
+		Dictionary<Node, float> costs = new Dictionary<Node, float>();
+		foreach (Node start in starts)
+			costs[start] = 0;
+
+		while (queue.Count > 0)
+		{
+			Node current = queue.Dequeue();
+			float cost = costs[current];
+
+			if (breakOn(current, cost))
+				continue;
+
+			foreach (Node neighbour in graph.Neighbours(current))
+			{
+				float edgeCost = graph.EdgeCost(current, neighbour);
+				float newCost = cost + edgeCost;
+
+				if (!costs.ContainsKey(neighbour) || newCost < costs[neighbour])
+				{
+					costs[neighbour] = newCost;
+					queue.Enqueue(neighbour);
+				}
+			}
+		}
+	}
+
 
 	public static List<Vector2Int> Flood(Vector2Int start, int max, VisitNode callback)
 	{

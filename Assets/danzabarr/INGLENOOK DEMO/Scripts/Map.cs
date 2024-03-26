@@ -28,8 +28,6 @@ public class Map : MapGeneratorBase
 	public List<Transform> goals = new List<Transform>();
 	public AbstractObstruction obstruction;
 	public Transform ray;
-	public Agent selected;
-
 	void Update()
 	{
 		mouseTile = Vector2Int.zero;
@@ -44,18 +42,6 @@ public class Map : MapGeneratorBase
 			mouseTile = hit.point.ToTileCoord();
 			mouseChunkCoord = mouseTile.ToChunkCoord(chunkSize);
 			mouseArea = GetArea(mouseTile.x, mouseTile.y);
-		
-			if (Input.GetMouseButtonDown(0))
-			{
-				Vector2Int local = mouseTile - mouseChunk.chunkPosition * chunkSize;
-				mouseChunk.SetBridge(local.x, local.y);
-			}
-				
-
-			if (Input.GetMouseButtonDown(0) && selected != null)
-			{
-				selected.SetPath(AStar(selected.transform.position, hit.point));
-			}
 		}
 	}
 

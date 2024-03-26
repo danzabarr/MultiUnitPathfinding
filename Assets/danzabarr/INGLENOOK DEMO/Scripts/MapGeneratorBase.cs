@@ -1,10 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
 using static Search;
 using Color = UnityEngine.Color;
 using Random = UnityEngine.Random;
@@ -745,6 +743,8 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 			return;
 
 		RemoveNode(wp.Node);
+		foreach (Bridge bridge in bridges)
+			bridge.waypoints.Remove(wp.Node);
 		
 		Vector3 position = wp.transform.position;
 		Vector2Int tile = position.ToTileCoord();
@@ -755,7 +755,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		wp.Node.area = area == null ? -1 : area.ID;
 
 		if (wp.enabled)
-			AddNode(wp.Node);
+			AddNode(wp.Node, true);
 	}
 
 #if UNITY_EDITOR
@@ -991,7 +991,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		return true;
 	}
 
-	protected bool AddNode(Node node)
+	protected bool AddNode(Node node, bool addToBridgesAndRamps = false)
 	{
 		if (node == null)
 			return false;
@@ -1017,6 +1017,12 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 				if (ramp.n11 != null)
 					Connect(node, ramp.n11);
 
+				foreach (Node wpn in ramp.waypoints)
+					Connect(node, wpn);
+
+				if (addToBridgesAndRamps && !ramp.waypoints.Contains(node))
+					ramp.waypoints.Add(node);
+
 				return true;
 			}
 
@@ -1027,7 +1033,13 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 
 				Connect(node, bridge.n0);
 				Connect(node, bridge.n1);
-				
+
+				foreach (Node wpn in bridge.waypoints)
+					Connect(node, wpn);
+
+				if (addToBridgesAndRamps && !bridge.waypoints.Contains(node))
+					bridge.waypoints.Add(node);
+
 				return true;
 			}
 
@@ -1096,6 +1108,9 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 
 	protected void Connect(Node a, Node b, bool bidirectional = true)
 	{
+		if (a == null || b == null || a == b)
+			return;
+		
 		float cost = Vector3.Distance(a.position, b.position);
 		Connect(a, b, cost);
 		if (bidirectional)
@@ -1244,6 +1259,16 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 					Connect(node, temp, false);
 		}
 		return temp;
+	}
+
+	public bool AStar(Node start, Node end, out List<Node> path)
+	{
+		path = Search.AStar(start, end, this, (node, cost) =>
+		{
+			return false;//!IsVisible(node.position.XZ(), end.position.XZ(), true, true);
+		});
+
+		return path != null;
 	}
 
 	public List<Node> AStar(Node start, Node end)

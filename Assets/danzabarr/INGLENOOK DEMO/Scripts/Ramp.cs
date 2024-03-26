@@ -15,6 +15,8 @@ public class Ramp
 	public Orientation orientation;
 	public Node n00, n01, n10, n11;
 
+	public List<Node> waypoints = new List<Node>();	// keep track of waypoints on this ramp
+
 	public Ramp() { }
 
 	public Ramp(Vector2Int position, int length, Orientation orientation, Node n00, Node n01, Node n10, Node n11)

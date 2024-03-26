@@ -73,7 +73,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AltitudeMin: 0
+    - _AltitudeMin: -0.05
     - _AmbientColor: 0.3
     - _BendRotationRandom: 0.259
     - _BladeCurve: 1.778

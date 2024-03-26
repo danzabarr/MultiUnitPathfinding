@@ -2,22 +2,59 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Functions for voxel traversal in 2D space.
+/// See Amanatides, J., & Woo, A. (1987). A fast voxel traversal algorithm for ray tracing. Eurographics, 87(3), 3-10.
+/// Available here http://www.cse.yorku.ca/~amana/research/grid.pdf
+/// Also see https://github.com/cgyurgyik/fast-voxel-traversal-algorithm/blob/master/overview/FastVoxelTraversalOverview.md
+/// </summary>
 public class Voxel2D 
 {
+	/// <summary>
+	/// Visitor callback. Passes details about the visited node to the caller and breaks on return true.
+	/// </summary>
+	/// <param name="node"> Visited node, integer precision. </param>
+	/// <param name="intersection">Visited intersection. This is the point that the ray intersects (enter/exits) the cell</param>
+	/// <param name="normal">The normal of the intersection, this is always an normalised orthogonal direction.</param>
+	/// <param name="steps">Number of steps (nodes visited) along the ray.</param>
+	/// <param name="distance">Floating point precision distance from the start to the visited intersection.</param>
+	/// <returns></returns>
 	public delegate bool VisitIntersection(Vector2Int node, Vector2 intersection, Vector2 normal, int steps, float distance);
 
+	/// <summary>
+	/// Simpler visitor callback. Passes just the node and the number of steps.
+	/// </summary>
 	public delegate bool VisitNode(Vector2Int node, int steps);
 
+	/// <summary>
+	/// Do voxel traversal along the line between two points in R2.
+	/// A line is a ray with a length...
+	/// <param name="p0"/> Traversal start point.</param>
+	/// <param name="p1"/> Traversal end point.</param>
+	/// <param name="vSize"/> The size of a cel in the voxel grid.</param>
+	/// <param name="vOffset"/> The offset of the voxel grid from the origin.</param>
+	/// <param name="callback"/> The visitor function that will be called at each visited node.</param>
+	/// </summary>
 	public static bool Line(Vector2 p0, Vector2 p1, Vector2 vSize, Vector2 vOffset, VisitNode callback)
 	{
 		return Ray(new Ray(p0.X0Y(), (p1 - p0).X0Y()), (p1 - p0).magnitude, vSize, vOffset, callback);
 	}
 
+	/// <summary>
+	/// Do voxel traversal along the line between two points in R2.
+	/// A line is a ray with a length...
+	/// <param name="p0"/> Traversal start point.</param>
+	/// <param name="p1"/> Traversal end point.</param>
+	/// <param name="vSize"/> The size of a cel in the voxel grid.</param>
+	/// <param name="vOffset"/> The offset of the voxel grid from the origin.</param>
+	/// <param name="callback"/> The visitor function that will be called at each visited node.</param>
+	/// </summary>
 	public static bool Line(Vector2 p0, Vector2 p1, Vector2 vSize, Vector2 vOffset, VisitIntersection callback)
 	{
 		return Ray(new Ray(p0.X0Y(), (p1 - p0).X0Y()), (p1 - p0).magnitude, vSize, vOffset, callback);
 	}
 
+	//
 	public static bool Line(Vector2 p0, Vector2 p1, Vector2 vSize, Vector2 vOffset, IObstruction obstruction)
 	{
 		return Ray(new Ray(p0.X0Y(), (p1 - p0).X0Y()), (p1 - p0).magnitude, vSize, vOffset, obstruction);
@@ -28,6 +65,11 @@ public class Voxel2D
 		return Ray(ray, maxDistance, vSize, vOffset, (node, _, _, steps, _) => callback(node, steps));
 	}
 
+
+	/// <summary>
+	/// Intersection between a ray and abstract obstacle in R2.
+	/// Simple visitor callback.
+	/// </summary>
 	public static bool Ray(Ray ray, float maxDistance, Vector2 vSize, Vector2 vOffset, IObstruction obstruction)
 	{
 		// if the ray doesn't intersect the bounding rectangle of the obstruction we can skip the raytrace
@@ -61,13 +103,9 @@ public class Voxel2D
 					float t1i = (bmaxi - p0i) / (p1i - p0i);
 
 					if (t0i > t1i)
-					{
-						float temp = t0i;
-						t0i = t1i;
-						t1i = temp;
-					}
+                        (t1i, t0i) = (t0i, t1i);
 
-					tNear = Mathf.Max(tNear, t0i);
+                    tNear = Mathf.Max(tNear, t0i);
 					tFar = Mathf.Min(tFar, t1i);
 
 					if (tNear > tFar || tFar < 0)
@@ -84,6 +122,10 @@ public class Voxel2D
 		return Ray(ray, maxDistance, vSize, vOffset, (node, _, _, _, _) => obstruction.Contains(node));
 	}
 
+	/// <summary>
+	/// Intersection between a ray and abstract obstacle in R2.
+	/// More detailed visitor callback.
+	/// </summary>
 	public static bool Ray(Ray ray, float maxDistance, Vector2 vSize, Vector2 vOffset, VisitIntersection callback)
 	{
 		Vector2 p0 = ray.origin.XZ();
@@ -147,12 +189,13 @@ public class Voxel2D
 		return false;
 	}
 
+	/// <summary>
+	/// Runs traversal and returns a list containing all the visited nodes. 
+	/// </summary>
 	public static List<Vector2Int> Line(Vector2 p0, Vector2 p1, Vector2 vSize, Vector2 vOffset)
 	{
 		List<Vector2Int> line = new List<Vector2Int>();
 		static Vector2 Vector2Abs(Vector2 a) => new Vector2(Mathf.Abs(a.x), Mathf.Abs(a.y));
-
-		// vOffset -= new Vector3(.5f, .5f, .5f);
 
 		p0.x /= vSize.x;
 		p0.y /= vSize.y;
@@ -178,7 +221,6 @@ public class Voxel2D
 
 			float next_t = Mathf.Min(t_max.x, t_max.y);
 			if (next_t > 1.0) break;
-			//Vector2 intersection = p0 + next_t * rd;  
 
 			if (t_max.x < t_max.y)
 			{
@@ -196,11 +238,17 @@ public class Voxel2D
 	}
 
 
+	/// <summary>
+	/// Like spherecast. Cast a circle along a line and the passed visitor function is called with every grid cel that is intersected by the capsule formed.
+	/// </summary>
 	public static bool Capsule(Vector2 p0, Vector2 p1, float radius, Vector2 vSize, Vector2 vOffset, VisitNode callback)
 	{
 		return Capsule(p0, p1, radius, vSize, vOffset, (node, _, _, steps, _) => callback(node, steps));
 	}
 
+	/// <summary>
+	/// Like spherecast. Cast a circle along a line and the passed visitor function is called with every grid cel that is intersected by the capsule formed.
+	/// </summary>
 	public static bool Capsule(Vector2 p0, Vector2 p1, float radius, Vector2 vSize, Vector2 vOffset, VisitIntersection callback)
 	{
 		float maxDistance = (p1 - p0).magnitude;

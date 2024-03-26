@@ -5,6 +5,7 @@ Shader "Toon/Terrain"
 		_MainColor ("Flat Colour", Color) = (1,1,1,1)
         _SlopeColor ("Slope Colour", Color) = (0,0,0,1)
         _SlopeMin ("Slope Threshold", Range(0, 1)) = 0.5
+		_WaterLevel ("Water Level", Float) = 0.0
 		_AmbientColor ("Shadow Opacity", Range(0, 1)) = 0.5
 		_ShadowThreshold ("Shadow Threshold", Range(0, 1)) = 0.5
 	}
@@ -34,6 +35,7 @@ Shader "Toon/Terrain"
 			{
 				float4 pos : SV_POSITION;
 				float3 normal : NORMAL;
+				float3 worldPos : TEXCOORD0;
 				SHADOW_COORDS(1)
 				UNITY_FOG_COORDS(2)
 				UNITY_VERTEX_INPUT_INSTANCE_ID 
@@ -44,6 +46,7 @@ Shader "Toon/Terrain"
             float _SlopeMin;
 			float _AmbientColor;
 			float _ShadowThreshold;
+			float _WaterLevel;
 
             v2f vert (appdata v)
 			{
@@ -52,6 +55,7 @@ Shader "Toon/Terrain"
                 UNITY_TRANSFER_INSTANCE_ID(v, o);
 				o.pos = UnityObjectToClipPos(v.vertex);
 				o.normal = UnityObjectToWorldNormal(v.normal);
+				o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
 				TRANSFER_SHADOW(o);
 				UNITY_TRANSFER_FOG(o, o.pos);
 				return o;
@@ -64,8 +68,9 @@ Shader "Toon/Terrain"
 				
 				fixed4 col = dot(i.normal, float3(0,1,0)) < _SlopeMin ? _SlopeColor : _MainColor;
 
-				col = lighting > _ShadowThreshold ? col : lerp(col, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
+				col = i.worldPos.y < _WaterLevel ? _MainColor : col;
 
+				col = lighting > _ShadowThreshold ? col : lerp(col, UNITY_LIGHTMODEL_AMBIENT, _AmbientColor);
                 
 				UNITY_APPLY_FOG(i.fogCoord, col);
 				return col;

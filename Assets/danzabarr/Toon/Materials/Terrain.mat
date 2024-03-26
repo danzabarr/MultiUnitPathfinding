@@ -81,6 +81,7 @@ Material:
     - _SrcBlend: 1
     - _Threshold: 0.994
     - _UVSec: 0
+    - _WaterLevel: 0.01
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 0.574, g: 0.5667814, b: 0.38687602, a: 1}

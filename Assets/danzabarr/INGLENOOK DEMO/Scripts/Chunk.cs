@@ -1,5 +1,5 @@
+using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -59,7 +59,7 @@ public class Chunk : AbstractTerrainGenerator
 	{
 		int textureScale = 2;
 		overheadCamera = new GameObject("Overhead Camera").AddComponent<Camera>();
-		overheadCamera.AddComponent<CameraThrottle>();
+		overheadCamera.gameObject.AddComponent<CameraThrottle>();
 		overheadCamera.transform.parent = transform;
 		overheadCamera.transform.localPosition = new Vector3(size.x / 2, 100, size.y / 2);
 		overheadCamera.transform.rotation = Quaternion.Euler(90, 0, 0);
@@ -109,7 +109,6 @@ public class Chunk : AbstractTerrainGenerator
 
 	public void SetBridge(int x, int z)
 	{
-		Debug.Log($"Set bridge at {x}, {z}");
 		if (x < 0 || x >= size.x || z < 0 || z >= size.y)
 			return;
 

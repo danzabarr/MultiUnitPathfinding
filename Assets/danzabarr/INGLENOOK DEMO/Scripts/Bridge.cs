@@ -8,6 +8,7 @@ public class Bridge
     public Orientation orientation;
     public Node n0, n1;
     public List<GameObject> pieces = new List<GameObject>();
+    public List<Node> waypoints = new List<Node>();	
 
     public Bridge() { }
 

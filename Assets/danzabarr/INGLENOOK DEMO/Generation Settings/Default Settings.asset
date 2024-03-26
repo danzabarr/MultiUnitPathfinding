@@ -18,5 +18,7 @@ MonoBehaviour:
   noise: {fileID: 11400000, guid: 43d5387e3b79f5f4e9920ff5075076c5, type: 2}
   riverNoise: {fileID: 11400000, guid: 33af982d2ada09047b4d93f49ff755c4, type: 2}
   center: {x: 48, y: 0, z: 48}
-  radius: 40
-  falloff: 15
+  radius: 45
+  falloff: 10
+  scale: 5
+  erosion: 0.001

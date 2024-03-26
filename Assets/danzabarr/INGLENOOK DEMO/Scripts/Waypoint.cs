@@ -2,18 +2,18 @@ using UnityEngine;
 
 /// <summary>
 /// These can be placed by hand, and attached to moving objects.
+/// Base class of Agents, so an agent is a moving waypoint for other agents.
 /// </summary>
 [ExecuteAlways]
 public class Waypoint : MonoBehaviour
 {
-    protected Map map; // cache the reference, there won't be too many waypoints
-    public float threshold = 0.001f;
+    protected Map map;
     private Node node = new Node(Vector2Int.zero, Vector3.zero, -1);
     public Node Node => node;
     public float GroundDistanceFromNode => node == null ? 0 : Vector3.Distance(transform.position.XZ(), node.position.XZ());
     public bool NeedsUpdating 
     {   
-        get => GroundDistanceFromNode > threshold || forceUpdate;
+        get => GroundDistanceFromNode > float.Epsilon || forceUpdate;
         set => forceUpdate = value;
     }
     private bool forceUpdate = false;
