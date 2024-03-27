@@ -177,7 +177,7 @@ public class Agent : Waypoint//, IAgent<Node>
 	void ResetRoamingCooldown()
 	{
 		roamingCooldown = roamWhenIdle >= 0 ? (roamWhenIdle * (0.5f + Random.value * 0.5f)) : float.MaxValue;
-		Debug.Log($"{name} idling for {roamingCooldown} seconds");
+		Debug.Log($"{ name } idling for { roamingCooldown } seconds");
 	}
 
 	void Roaming()
@@ -185,6 +185,7 @@ public class Agent : Waypoint//, IAgent<Node>
 		if (agentGoal == null)
 		{
 			List<Agent> agents = new List<Agent>(FindObjectsOfType<Agent>());
+
 			// Find a random waypoint
 			Waypoint[] waypoints = FindObjectsOfType<Waypoint>();
 			if (waypoints.Length == 0)
@@ -395,8 +396,7 @@ public class Agent : Waypoint//, IAgent<Node>
 		// Interact with SimpleDialogue components if they are in range
 		if (Input.GetButtonDown("Fire1"))
 		{
-			if
-			(
+			if (
 				Physics.SphereCast(transform.position + Vector3.up - transform.forward * 0.25f, 1f, transform.forward, out RaycastHit hit, 2) &&
 				hit.collider.TryGetComponent<SimpleDialogue>(out var dialogue)
 			)

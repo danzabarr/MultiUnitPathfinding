@@ -15,8 +15,8 @@ public class CollisionTest : MonoBehaviour
 	public float radius = 1;
 	public List<Circle> circles = new List<Circle>();
 	public List<Rectangle> rectangles = new List<Rectangle>();
-
-		public Vector2 velocity;
+	public Vector2 velocity;
+	
 	public void OnDrawGizmos()
 	{
 		Dictionary<Collision2, IShape> collisions = new Dictionary<Collision2, IShape>();
