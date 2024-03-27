@@ -115,7 +115,7 @@ public class Decorations : MonoBehaviour
                     if (set.Contains(new Vector2Int(x, y)))
                         continue;
 
-                    if (!decoration.IsSet(PlacementType(chunk.GetPermanentObstructionType(x, y))))
+                    if (!decoration.IsSet(PlacementType(chunk.GetTileType(x, y))))
                         continue;
 
                     if (Random.value > decoration.density)

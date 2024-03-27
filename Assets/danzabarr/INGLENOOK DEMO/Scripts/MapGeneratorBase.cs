@@ -8,12 +8,11 @@ using Color = UnityEngine.Color;
 using Random = UnityEngine.Random;
 
 /// <summary>
-/// This file is long but needs to be.
-/// Map generation and other spatial stuff where a square is better uses chunks.
-/// Navigation uses areas, ramps and nodes.
+/// This file is long.
+/// It is the main script for the map generation.
+/// Extended by the Map script.
 /// </summary>
-
-public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSettings>
+public abstract class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener<NoiseSettings>
 {
 	[Header("Settings")]
 	[SerializeField]
@@ -494,7 +493,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		{
 			// Bottom left and top right corners of the ramp
 			Vector2Int V00 = ramp.position;
-			Vector2Int V11 = ramp.position + new Vector2Int(ramp.orientation == Orientation.HORIZONTAL ? ramp.length + 1 : 1, ramp.orientation == Orientation.VERTICAL ? ramp.length + 1 : 1);
+			Vector2Int V11 = ramp.position + new Vector2Int(ramp.orientation == Orientation.HORIZONTAL ? ramp.width + 1 : 1, ramp.orientation == Orientation.VERTICAL ? ramp.width + 1 : 1);
 
 			// Height at the bottom left and top right corners of the ramp
 			float height0 = ramp.n00.position.y;
@@ -543,7 +542,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		foreach (Ramp ramp in ramps)
 		{
 			Vector2Int V00 = ramp.position;// (ramp.orientation == Orientation.HORIZONTAL ? Vector2Int.right : Vector2Int.up);
-			Vector2Int V11 = ramp.position + new Vector2Int(ramp.orientation == Orientation.HORIZONTAL ? ramp.length : 0, ramp.orientation == Orientation.VERTICAL ? ramp.length : 0);
+			Vector2Int V11 = ramp.position + new Vector2Int(ramp.orientation == Orientation.HORIZONTAL ? ramp.width : 0, ramp.orientation == Orientation.VERTICAL ? ramp.width : 0);
 
 			for (int y = V00.y; y <= V11.y; y++)
 				for (int x = V00.x; x <= V11.x; x++)
@@ -813,10 +812,10 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 			return null;
 
 		Chunk chunk = Instantiate(chunkPrefab);
+		chunk.map = this;
 		chunk.transform.parent = transform;
 		chunk.name = "Chunk [" + x + ", " + y + "]";
 		chunk.chunkPosition = new Vector2Int(x, y);
-		chunk.terrainSettings = terrainSettings;
 		chunk.size = chunkSize * Vector2Int.one;
 
 		chunks.Add(new Vector2Int(x, y), chunk);
@@ -831,7 +830,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		if (TryGetChunk(chunkCoord, out Chunk chunk))
 		{
 			tile -= chunkCoord * chunkSize;
-			return chunk.GetPermanentObstructionType(tile.x, tile.y) == Chunk.CLIFF;
+			return chunk.GetTileType(tile.x, tile.y) == Chunk.CLIFF;
 		}
 
 		return false;
@@ -844,7 +843,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		{
 			tile -= chunkCoord * chunkSize;
 
-			return Mathf.Max(-1, chunk.GetPermanentObstructionType(tile.x, tile.y));
+			return Mathf.Max(-1, chunk.GetTileType(tile.x, tile.y));
 		}
 
 		return Chunk.OUT_OF_BOUNDS;
@@ -857,7 +856,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		{
 			tile -= chunkCoord * chunkSize;
 
-			return chunk.GetPermanentObstructionType(tile.x, tile.y);
+			return chunk.GetTileType(tile.x, tile.y);
 		}
 
 		return Chunk.OUT_OF_BOUNDS;
@@ -873,7 +872,7 @@ public class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidateListener
 		if (TryGetChunk(chunkCoord, out Chunk chunk))
 		{
 			tile -= chunkCoord * chunkSize;
-			return chunk.GetPermanentObstructionType(tile.x, tile.y) >= Chunk.BRIDGE;
+			return chunk.GetTileType(tile.x, tile.y) >= Chunk.BRIDGE;
 		}
 
 		return false;

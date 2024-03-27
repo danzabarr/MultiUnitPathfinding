@@ -1,14 +1,14 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum AgentState
+public enum BehaviourState
 {
 	Controlled, // controlled by the player
-	Idle,		// not moving
-	Walking,	// moving to a waypoint
-	Talking,	// in dialogue
+	Idle,       // not moving
+	Roaming,    // paths to random waypoints
+	Walking,    // moving to a waypoint
+	Talking,    // in dialogue
 }
 
 public enum ControlMode
@@ -23,29 +23,79 @@ public enum ControlMode
 	Direct
 }
 
+/// <summary>
+/// Agent class is responsible for controlled movement and pathing.
+/// That way the player character can also be in the same states as an NPC - 
+/// Idle, Talking, Walking, etc. which is useful for taking control from the player
+/// at certain moments.
+/// Also means that any of the NPCs can be made controllable by the player.
+/// </summary>
 [RequireComponent(typeof(Animator), typeof(Rigidbody))]
 public class Agent : Waypoint//, IAgent<Node>
 {
-
-
 	// Inspector variables
-	[SerializeField] AgentState agentState = AgentState.Idle;
+
+	/// <summary>
+	/// The state of the agent.
+	/// </summary>
+	[SerializeField] BehaviourState agentBehaviourState = BehaviourState.Idle;
+
+	/// <summary>
+	/// The goal the agent will path towards.
+	/// </summary>
 	[SerializeField] Waypoint agentGoal;
+	[SerializeField] Waypoint idlePoint;
+
+	/// <summary>
+	/// The path the agent is currently following.
+	/// </summary>
 	[SerializeField] List<Node> agentPath = new List<Node>();
+
+	/// <summary>
+	/// The control mode of the agent, either tank or direct.
+	/// Used when in the controlled state.
+	/// </summary>
 	[SerializeField] ControlMode controlMode = ControlMode.Direct;
+
+	/// <summary>
+	/// The speed at which the agent moves in units per second.
+	/// </summary>
 	[SerializeField] float movementSpeed = 2;
+
+	/// <summary>
+	/// The speed at which the agent rotates in degrees per second.
+	/// </summary>
 	[SerializeField] float rotationSpeed = 200;
+
+	/// <summary>
+	/// The force applied to the agent when jumping.
+	/// </summary>
 	[SerializeField] float jumpForce = 4;
-	[SerializeField] string idleAnimatorTrigger = "Idle_A";	
-	[SerializeField] string walkAnimatorTrigger = "Walk";
-	[SerializeField] string talkAnimatorTrigger = "Talk";
 
+	/// <summary>
+	/// The distance from the goal at which the agent will consider itself to have arrived.
+	/// </summary>
+	[SerializeField] float goalTolerance = 0.1f;
 
-	// Cached component refs
+	/// <summary>
+	/// Set to zero for instant roaming when idle.
+	/// Set to a positive value to wait before roaming.
+	/// Set to a negative value to disable roaming.
+	/// </summary>
+	[SerializeField] float roamWhenIdle = -1;
+
+	[Header("Animations")] // Animation triggers
+	[SerializeField] string idleAnimation = "Idle";
+	[SerializeField] string walkAnimation = "Walk";
+	[SerializeField] string talkAnimation = "Talk";
+	[SerializeField] string groundedAnimation = "Grounded";
+	[SerializeField] string movespeedAnimation = "MoveSpeed";
+
+	// Cached components
 	private Animator animator;
 	private Rigidbody rigidBody;
 
-	// Private variables
+	// Internal variables
 	float verticalInput = 0;
 	float horizontalInput = 0;
 	readonly float inputInterpolation = 10;
@@ -60,37 +110,150 @@ public class Agent : Waypoint//, IAgent<Node>
 	bool jumpInput = false;
 	bool jumpingToSafety = false;
 	Vector3 lastSafePosition;
-	Vector3 unsafePosition; 
+	Vector3 unsafePosition;
+	float roamingCooldown;
 
 	void Awake()
 	{
 		animator = GetComponent<Animator>();
 		rigidBody = GetComponent<Rigidbody>();
+		ResetRoamingCooldown();
+	}
+
+	public BehaviourState State
+	{
+		get => agentBehaviourState;
+		set
+		{
+			if (agentBehaviourState == value)
+				return;
+
+			agentBehaviourState = value;
+
+			// do something on state change
+			switch (agentBehaviourState)
+			{
+				case BehaviourState.Idle:
+					ResetRoamingCooldown();
+					break;
+
+				case BehaviourState.Walking:
+				case BehaviourState.Roaming:
+					map.UpdateWaypoint(this);
+					break;
+			}
+		}
 	}
 
 	public override void Update()
 	{
 		base.Update(); // update the waypoint position
 
-		switch (agentState)
+		// don't do the following in edit mode
+		if (!Application.isPlaying)
+			return;
+
+		switch (agentBehaviourState)
 		{
-			case AgentState.Controlled:
+			case BehaviourState.Controlled:
 				Controlled();
 				break;
-			case AgentState.Idle:
+			case BehaviourState.Idle:
 				Idle();
 				break;
-			case AgentState.Walking:
+			case BehaviourState.Walking:
 				Walking();
 				break;
-			case AgentState.Talking:
+			case BehaviourState.Talking:
 				Talking();
+				break;
+			case BehaviourState.Roaming:
+				Roaming();
+				Walking();
 				break;
 		}
 	}
 
+	void ResetRoamingCooldown()
+	{
+		roamingCooldown = roamWhenIdle >= 0 ? (roamWhenIdle * (0.5f + Random.value * 0.5f)) : float.MaxValue;
+		Debug.Log($"{name} idling for {roamingCooldown} seconds");
+	}
+
+	void Roaming()
+	{
+		if (agentGoal == null)
+		{
+			List<Agent> agents = new List<Agent>(FindObjectsOfType<Agent>());
+			// Find a random waypoint
+			Waypoint[] waypoints = FindObjectsOfType<Waypoint>();
+			if (waypoints.Length == 0)
+				return;
+
+			bool found = false;
+			int attempts = 0;
+			while (!found && attempts < 10)
+			{
+				attempts++;
+
+				// pick a random waypoint
+				Waypoint randomWaypoint = waypoints[Random.Range(0, waypoints.Length)];
+
+				if (randomWaypoint == null)
+					continue;
+
+				// make sure the waypoint is not this one
+				if (randomWaypoint == this)
+					continue;
+
+				// make sure the waypoint is enabled
+				if (!randomWaypoint.enabled)
+					continue;
+
+				// make sure the waypoint can see other nodes
+				if (randomWaypoint.IsOrphaned())
+					continue;
+
+				// if the waypoint is an agent, make sure it's stationary
+				if (randomWaypoint is Agent agent)
+				{
+					switch (agent.State)
+					{
+						case BehaviourState.Walking:
+						case BehaviourState.Roaming:
+						case BehaviourState.Controlled: // don't path to controlled agents
+							continue;
+					}
+				}
+
+				// if the waypoint already has an agent idling there, skip it
+				if (agents.Exists(a => a.idlePoint == randomWaypoint))
+					continue;
+
+				// if the waypoint already has an agent pathing to it, skip it
+				if (agents.Exists(a => a.agentGoal == randomWaypoint))
+					continue;
+
+				// if we can path to the waypoint, set it as the goal					
+				if (PathTo(randomWaypoint.Node))
+				{
+					agentGoal = randomWaypoint;
+					idlePoint = null;
+					found = true;
+					Debug.Log($"{name} started roaming to {agentGoal.name}");
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// Also gets called in roaming state.
+	/// </summary>
 	void Walking()
 	{
+		if (rigidBody)
+			rigidBody.isKinematic = true;
+
 		if (HasPath())
 		{
 			Node next = GetNext();
@@ -114,83 +277,94 @@ public class Agent : Waypoint//, IAgent<Node>
 			// Move towards the next node
 			Vector3 direction = (next.position - transform.position).normalized;
 			transform.position += direction * movementSpeed * Time.deltaTime;
-			
+
 			// Rotate smoothly
 			Quaternion targetRotation = Quaternion.AngleAxis(Vector3.SignedAngle(Vector3.forward, direction, Vector3.up), Vector3.up);
 			transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-			
+
 			// Animation triggers
-			PlayAnimation(walkAnimatorTrigger);
-			animator.SetFloat("MoveSpeed", movementSpeed);
+			PlayAnimation(walkAnimation);
+			SetAnimatorMovementSpeed(movementSpeed);
 
 			// If we're close enough to the next node, pop it off the path
 			const float Epsilon = 0.01f;
-			if (Vector3.Distance(transform.position, next.position) < Epsilon)
+			float tolerance = agentPath.Count <= 1 ? goalTolerance : Epsilon;
+			if (Vector3.Distance(transform.position, next.position) < tolerance)
 				Pop();
+
+			// If we've reached the goal, clear the path.
+			if (agentGoal == null || Vector3.Distance(transform.position, agentGoal.Node.position) < goalTolerance)
+				ClearPath();
 		}
 		else
 		{
 			// If we don't have a path, stop moving
-			PlayAnimation(idleAnimatorTrigger);
-			animator.SetFloat("MoveSpeed", 0);
+			PlayAnimation(idleAnimation);
+			SetAnimatorMovementSpeed(0);
 
 			// If we still have a target and no path, try to find a path to it
-			if (agentGoal != null && Vector2.Distance(transform.position.XZ(), agentGoal.transform.position.XZ()) > 0.1f)
+			if (agentGoal != null && Vector2.Distance(transform.position.XZ(), agentGoal.transform.position.XZ()) > goalTolerance)
 				PathTo(agentGoal.Node);
-			
-			// Otherwise go idle
-			else
-				agentState = AgentState.Idle;
+
+			// Otherwise if in roaming state go back to idle
+			else if (agentBehaviourState == BehaviourState.Roaming)
+			{
+				// if the goal was an agent, turn to face it
+				if (agentGoal is Agent agent)
+					TurnToFace(agent.transform.position);
+					
+				// otherwise align rotation with the waypoint orientation
+				else
+					transform.forward = agentGoal.transform.forward.XZ().X0Y();
+
+				State = BehaviourState.Idle;
+				idlePoint = agentGoal;
+				agentGoal = null;
+			}
 		}
 	}
 
 	void Idle()
 	{
+		roamingCooldown -= Time.deltaTime;
+		if (roamingCooldown <= 0)
+			State = BehaviourState.Roaming;
+
 		agentPath.Clear();
-		PlayAnimation(idleAnimatorTrigger);
-		animator.SetFloat("MoveSpeed", 0);
+		PlayAnimation(idleAnimation);
+		SetAnimatorMovementSpeed(0);
 	}
 
 	void Talking()
 	{
-		PlayAnimation(talkAnimatorTrigger);
-		animator.SetFloat("MoveSpeed", 0);
+		PlayAnimation(talkAnimation);
+		SetAnimatorMovementSpeed(0);
 	}
 
-	void Controlled()
+	void ResetStuckCharacter()
 	{
+		// If the player gets stuck somewhere, jump to the last safe position.
 		if (jumpingToSafety)
 		{
-			// parabolic arc to reset position
+			SetAnimatorMovementSpeed(0);
 			float t = (Time.time - jumpStartTime) / 0.5f;
-			if (t > 1)
+			if (t <= 1)
+			{
+				// interpolate between unsafe position and last safe position
+				transform.position = Vector3.Lerp(unsafePosition, lastSafePosition, t);
+				// add a parabolic arc jump effect
+				transform.position += 0.5f * Mathf.Sin(t * Mathf.PI) * Vector3.up;
+				return;
+			}
+			else
 			{
 				jumpingToSafety = false;
 				transform.position = lastSafePosition;
 				rigidBody.velocity = Vector3.zero;
 			}
-			else
-			{
-				transform.position = Vector3.Lerp(unsafePosition, lastSafePosition, t) + Vector3.up * 0.5f * Mathf.Sin(t * Mathf.PI);
-				return;
-			}
 		}
 
-		// interact with SimpleDialogue components if they are in range
-		if (Input.GetButtonDown("Fire1"))
-		{
-			Debug.DrawRay(transform.position, transform.forward * 2, Color.red, 2);
-			if 
-			(
-				Physics.SphereCast(transform.position, 0.5f, transform.forward, out RaycastHit hit, 2) && 
-				hit.collider.TryGetComponent<SimpleDialogue>(out var dialogue)
-			) 
-			dialogue.StartDialogue(this);
-		}
-
-		if (Input.GetKey(KeyCode.Space))
-			jumpInput = true;
-
+		// Update the last safe position
 		if (grounded && transform.position.y > 0)
 		{
 			Vector2Int tile = transform.position.ToTileCoord();
@@ -199,7 +373,8 @@ public class Agent : Waypoint//, IAgent<Node>
 				lastSafePosition = tile.X0Y() + Vector3.up * transform.position.y;
 		}
 
-		if (transform.position.y < -1 && !jumpingToSafety)
+		// If the player falls off the map, jump to the last safe position
+		else if (transform.position.y < -1 && !jumpingToSafety)
 		{
 			rigidBody.velocity = Vector3.zero;
 			jumpingToSafety = true;
@@ -208,21 +383,43 @@ public class Agent : Waypoint//, IAgent<Node>
 		}
 	}
 
+	void Controlled()
+	{
+		if (rigidBody)
+			rigidBody.isKinematic = false;
+		// Reset the character if they get stuck
+		ResetStuckCharacter();
+		if (jumpingToSafety)
+			return;
+
+		// Interact with SimpleDialogue components if they are in range
+		if (Input.GetButtonDown("Fire1"))
+		{
+			Debug.DrawRay(transform.position, transform.forward * 2, Color.red, 2);
+			if
+			(
+				Physics.SphereCast(transform.position, 0.5f, transform.forward, out RaycastHit hit, 2) &&
+				hit.collider.TryGetComponent<SimpleDialogue>(out var dialogue)
+			)
+				dialogue.StartDialogue(this);
+		}
+
+		// Jumping
+		if (Input.GetButtonDown("Jump"))
+			jumpInput = true;
+	}
+
 	void FixedUpdate()
 	{
-		animator.SetBool("Grounded", grounded);
-
-		// if the character is not moving, play the idle animation
-		if (verticalInput == 0 && horizontalInput == 0)
-			animator.SetTrigger(idleAnimatorTrigger);
-		
-		// otherwise play walk animation
-		else
-			animator.SetTrigger(walkAnimatorTrigger);
-
 		// Disable controls when jumping
-		if (!jumpingToSafety)
+		if (jumpingToSafety)
 			return;
+
+		if (agentBehaviourState != BehaviourState.Controlled)
+			return;
+
+		if (!string.IsNullOrEmpty(groundedAnimation))
+			animator.SetBool(groundedAnimation, grounded);
 
 		switch (controlMode)
 		{
@@ -257,8 +454,7 @@ public class Agent : Waypoint//, IAgent<Node>
 		transform.position += transform.forward * verticalInput * movementSpeed * Time.deltaTime;
 		transform.Rotate(0, horizontalInput * rotationSpeed * Time.deltaTime, 0);
 
-		animator.SetFloat("MoveSpeed", verticalInput);
-		
+		SetAnimatorMovementSpeed(verticalInput);
 		JumpingAndLanding();
 	}
 
@@ -290,10 +486,9 @@ public class Agent : Waypoint//, IAgent<Node>
 
 			transform.rotation = Quaternion.LookRotation(m_currentDirection);
 			transform.position += m_currentDirection * movementSpeed * Time.deltaTime;
-
-			animator.SetFloat("MoveSpeed", direction.magnitude);
 		}
 
+		SetAnimatorMovementSpeed(directionLength);
 		JumpingAndLanding();
 	}
 
@@ -312,16 +507,16 @@ public class Agent : Waypoint//, IAgent<Node>
 	{
 		ContactPoint[] contactPoints = collision.contacts;
 		for (int i = 0; i < contactPoints.Length; i++)
-        {
-            if (Vector3.Dot(contactPoints[i].normal, Vector3.up) <= 0.5f)
-                continue;
+		{
+			if (Vector3.Dot(contactPoints[i].normal, Vector3.up) <= 0.5f)
+				continue;
 
-            if (!collisions.Contains(collision.collider))
-                collisions.Add(collision.collider);
+			if (!collisions.Contains(collision.collider))
+				collisions.Add(collision.collider);
 
-            grounded = true;
-        }
-    }
+			grounded = true;
+		}
+	}
 
 	void OnCollisionStay(Collision collision)
 	{
@@ -336,15 +531,15 @@ public class Agent : Waypoint//, IAgent<Node>
 			}
 
 		collisions.Remove(collision.collider);
-		
-		if (collisions.Count == 0) 
+
+		if (collisions.Count == 0)
 			grounded = false;
 	}
 
 	void OnCollisionExit(Collision collision)
 	{
 		collisions.Remove(collision.collider);
-		if (collisions.Count == 0) 
+		if (collisions.Count == 0)
 			grounded = false;
 	}
 
@@ -352,6 +547,12 @@ public class Agent : Waypoint//, IAgent<Node>
 	{
 		if (!string.IsNullOrEmpty(trigger))
 			animator.SetTrigger(trigger);
+	}
+
+	public void SetAnimatorMovementSpeed(float speed)
+	{
+		if (!string.IsNullOrEmpty(movespeedAnimation))
+			animator.SetFloat(movespeedAnimation, speed);
 	}
 
 	public void TurnToFace(Vector3 position)
@@ -374,16 +575,16 @@ public class Agent : Waypoint//, IAgent<Node>
 		agentPath.RemoveAt(0);
 		return next;
 	}
-	 
-    public void SetPath(IEnumerable<Node> path)
-    {
+
+	public void SetPath(IEnumerable<Node> path)
+	{
 		if (path == null)
 			agentPath?.Clear();
 		else
 			agentPath = new List<Node>(path);
-    }
+	}
 
-	public void PathTo(Vector3 goal)
+	public bool PathTo(Vector3 goal)
 	{
 		ClearPath();
 
@@ -392,9 +593,11 @@ public class Agent : Waypoint//, IAgent<Node>
 
 		if (map != null)
 			SetPath(map.AStar(Node, goal));
+
+		return HasPath();
 	}
 
-	public void PathTo(Node goal)
+	public bool PathTo(Node goal)
 	{
 		ClearPath();
 
@@ -403,22 +606,38 @@ public class Agent : Waypoint//, IAgent<Node>
 
 		if (map != null)
 			SetPath(map.AStar(Node, goal));
+
+		return HasPath();
 	}
 
-	public void PathTo(string waypoint)
+	public bool PathTo(string waypoint)
 	{
 		ClearPath();
 
 		GameObject obj = GameObject.Find(waypoint);
 		if (obj == null)
-			return;
+			return false;
 
 		if (!obj.TryGetComponent<Waypoint>(out var wp))
-			return;
+			return false;
 
 		if (!wp.enabled)
-			return;
+			return false;
 
-		PathTo(wp.Node);
+		return PathTo(wp.Node);
+	}
+
+    public override void OnDrawGizmos() {}
+
+    public override void OnDrawGizmosSelected()
+	{
+		if (HasPath())
+		{
+			Gizmos.color = Color.green;
+			for (int i = 0; i < agentPath.Count - 1; i++)
+				Gizmos.DrawLine(agentPath[i].position, agentPath[i + 1].position);
+		}
+		else 
+			base.OnDrawGizmosSelected();
 	}
 }

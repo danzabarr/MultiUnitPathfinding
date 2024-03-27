@@ -147,6 +147,9 @@ public class CameraController : MonoBehaviour
                 Vector3 targetPosition = lerpTarget.position - lerpTarget.forward.XZ().X0Y() * lerpTarget.position.y / lerpTarget.forward.y;
                 lerpTarget.RotateAround(targetPosition, Vector3.up, Mathf.RoundToInt(lerpTarget.eulerAngles.y / 45) * 45 - 45 - lerpTarget.eulerAngles.y);
             }
+
+            // snap rotation to the nearest 45 degree angle
+            lerpTarget.rotation = Quaternion.Euler(followAngle, Mathf.RoundToInt(lerpTarget.eulerAngles.y / 45) * 45, 0);
         }
     
         else if (mode == CameraMode.Focus)

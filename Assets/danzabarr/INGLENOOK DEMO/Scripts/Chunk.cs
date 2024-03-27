@@ -10,11 +10,10 @@ using UnityEngine;
 /// </summary>
 public class Chunk : AbstractTerrainGenerator
 {
-	public TerrainGenerationSettings terrainSettings;
+	public MapGeneratorBase map;
 	public Vector2Int size;
 	public Vector2Int chunkPosition;
 	public Material grassMaterial;
-
 	private Camera overheadCamera;
 	private GameObject grass;
 
@@ -25,78 +24,21 @@ public class Chunk : AbstractTerrainGenerator
 	public const int WATER = -4;
 	public const int OUT_OF_BOUNDS = -5;
 
-	[SerializeField] private int[] permanentObstructions;
+	[SerializeField] private int[] tiles;
 	
-	//TODO:
-	public bool smoothShading = true;
-
 	public Vector3 ChunkOffset => (chunkPosition * size).X0Y();
 	
 	public Vector3 OnGround(Vector3 position)
 	{
-		return new Vector3(position.x, terrainSettings.Sample(position.x, position.z), position.z);
+		return new Vector3(position.x, map.terrainSettings.Sample(position.x, position.z), position.z);
 	}
 
-	[ContextMenu("Create Grass")]
-	public void SetupGrass()
-	{
-		grass = new GameObject("Grass");
-		grass.layer = LayerMask.NameToLayer("Grass");
-		grass.transform.parent = transform;
-		grass.transform.localPosition = Vector3.zero;
-		grass.transform.localRotation = Quaternion.identity;
-		grass.transform.localScale = Vector3.one;
-		grass.AddComponent<MeshFilter>().sharedMesh = mesh;
-		MeshRenderer meshRenderer = grass.AddComponent<MeshRenderer>();
-		meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-		Material material = meshRenderer.sharedMaterial = new Material(grassMaterial);
-		material.SetTexture("_GrassMask", overheadCamera.targetTexture);
-		material.SetTextureScale("_GrassMask", new Vector2(1.0f / size.x, 1.0f / size.y));
-	}
-
-	[ContextMenu("Create Overhead Camera")]
-	public void SetupOverheadCamera() 
-	{
-		int textureScale = 2;
-		overheadCamera = new GameObject("Overhead Camera").AddComponent<Camera>();
-		overheadCamera.gameObject.AddComponent<CameraThrottle>();
-		overheadCamera.transform.parent = transform;
-		overheadCamera.transform.localPosition = new Vector3(size.x / 2, 100, size.y / 2);
-		overheadCamera.transform.rotation = Quaternion.Euler(90, 0, 0);
-		overheadCamera.orthographic = true;
-		overheadCamera.orthographicSize = size.x / 2;
-		overheadCamera.nearClipPlane = 0.1f;
-		overheadCamera.farClipPlane = 200;
-		overheadCamera.targetTexture = new RenderTexture(size.x * textureScale, size.y * textureScale, 24);
-		overheadCamera.cullingMask = 1 << LayerMask.NameToLayer("Overhead Camera");
-		overheadCamera.clearFlags = CameraClearFlags.SolidColor;
-		overheadCamera.backgroundColor = Color.white;
-		overheadCamera.enabled = false;
-		overheadCamera.Render();
-		overheadCamera.clearFlags = CameraClearFlags.Nothing;
-	}
-
-	[ContextMenu("Regenerate Decorations")]
-	public void RegenerateDecorations()
-	{		
-		Random.InitState(chunkPosition.x * 2000 + chunkPosition.y - 1000);
-		foreach (Decorations decorations in GetComponents<Decorations>())
-			decorations.Regenerate();
-	}
-
-	[ContextMenu("Regenerate Cliff Decorations")]
-	public void GenerateRocks()
-	{
-		foreach (CliffDecorations cd in GetComponents<CliffDecorations>())
-			cd.GenerateRocks();
-	}
-
-	public int GetPermanentObstructionType(int x, int z)
+	public int GetTileType(int x, int z)
 	{
 		if (x < 0 || x >= size.x || z < 0 || z >= size.y)
 			return OUT_OF_BOUNDS;
 
-		return permanentObstructions[x + z * size.x];
+		return tiles[x + z * size.x];
 	}
 
 	public void SetRamp(int x, int z)
@@ -104,7 +46,7 @@ public class Chunk : AbstractTerrainGenerator
 		if (x < 0 || x >= size.x || z < 0 || z >= size.y)
 			return;
 			
-		permanentObstructions[x + z * size.x] = RAMP;
+		tiles[x + z * size.x] = RAMP;
 	}
 
 	public void SetBridge(int x, int z)
@@ -112,7 +54,7 @@ public class Chunk : AbstractTerrainGenerator
 		if (x < 0 || x >= size.x || z < 0 || z >= size.y)
 			return;
 
-		permanentObstructions[x + z * size.x] = BRIDGE;
+		tiles[x + z * size.x] = BRIDGE;
 	}
 
 	public (Vector3, Vector3) OnMesh(Vector3 position)
@@ -135,6 +77,10 @@ public class Chunk : AbstractTerrainGenerator
 		}
 	}
 
+	/// <summary>
+	/// This is called when some vertices are changed, and we need to update
+	/// the diagonals of the quads so that the shortest diagonal is used for triangulation.
+	/// </summary>
 	public override void OnVertexUpdate()
 	{
 		// We just want to fix the quads here so that the shortest diagonal is used for triangulation
@@ -187,6 +133,11 @@ public class Chunk : AbstractTerrainGenerator
 		mesh.RecalculateBounds();
 	}
 
+	/// <summary>
+	/// This is called by the terrain generator to create the 
+	/// vertices, triangles, uv and normals arrays of the mesh.
+	/// It also generates the tiles array.
+	/// </summary>
 	public override void CreateArrays(out Vector3[] vertices, out int[] triangles, out Vector2[] uv, out Vector3[] normals)
 	{
 		transform.position = ChunkOffset;
@@ -199,36 +150,36 @@ public class Chunk : AbstractTerrainGenerator
 		{
 			for (int x = 0; x <= size.x; x++)
 			{
-				vertices[i] = OnGround(new Vector3(x + terrainSettings.offset.x, 0, y + terrainSettings.offset.z) + ChunkOffset) - ChunkOffset;
+				vertices[i] = OnGround(new Vector3(x + map.terrainSettings.offset.x, 0, y + map.terrainSettings.offset.z) + ChunkOffset) - ChunkOffset;
 				uv[i] = new Vector2((float)x / size.x, (float)y / size.y);
 				i++;
 			}
 		}
 
-		if (permanentObstructions == null || permanentObstructions.Length != size.x * size.y)
-			permanentObstructions = new int[size.x * size.y];
+		if (tiles == null || tiles.Length != size.x * size.y)
+			tiles = new int[size.x * size.y];
 
 		for (int ti = 0, vi = 0, y = 0; y < size.y; y++, vi++)
 		{
 			for (int x = 0; x < size.x; x++, ti += 6, vi++)
 			{
-				if (permanentObstructions[x + y * size.x] == BRIDGE)
+				if (tiles[x + y * size.x] == BRIDGE)
 					continue;
 					
-				if (permanentObstructions[x + y * size.x] == RAMP)
+				if (tiles[x + y * size.x] == RAMP)
 					continue;
 
 				float minHeight = Mathf.Min(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
 				float maxHeight = Mathf.Max(vertices[vi].y, vertices[vi + 1].y, vertices[vi + size.x + 1].y, vertices[vi + size.x + 2].y);
 
 				if (maxHeight - minHeight > 0.01f)
-					permanentObstructions[x + y * size.x] = CLIFF;
+					tiles[x + y * size.x] = CLIFF;
 
 				else if (minHeight < 0)
-					permanentObstructions[x + y * size.x] = WATER;
+					tiles[x + y * size.x] = WATER;
 
 				else
-					permanentObstructions[x + y * size.x] = Mathf.RoundToInt(minHeight / terrainSettings.snapIncrement);
+					tiles[x + y * size.x] = Mathf.RoundToInt(minHeight / map.terrainSettings.snapIncrement);
 
 				// rotate the triangles so that the diagonal is shortest
 
@@ -292,19 +243,69 @@ public class Chunk : AbstractTerrainGenerator
 			tempNormals[triangles[i + 2]].Add(normal);
 		}
 
-		if (smoothShading)
+		// Average normals for smooth shading
+		for (int i = 0; i < normals.Length; i++)
 		{
-			// Average normals for smooth shading
-			for (int i = 0; i < normals.Length; i++)
-			{
-				Vector3 sum = Vector3.zero;
-				foreach (Vector3 n in tempNormals[i])
-				{
-					sum += n;
-				}
-				normals[i] = (sum / tempNormals[i].Count).normalized;
-			}
+			Vector3 sum = Vector3.zero;
+			foreach (Vector3 n in tempNormals[i])
+				sum += n;
+			normals[i] = (sum / tempNormals[i].Count).normalized;
 		}
+	}
+
+
+	[ContextMenu("Create Grass")]
+	public void SetupGrass()
+	{
+		grass = new GameObject("Grass");
+		grass.layer = LayerMask.NameToLayer("Grass");
+		grass.transform.parent = transform;
+		grass.transform.localPosition = Vector3.zero;
+		grass.transform.localRotation = Quaternion.identity;
+		grass.transform.localScale = Vector3.one;
+		grass.AddComponent<MeshFilter>().sharedMesh = mesh;
+		MeshRenderer meshRenderer = grass.AddComponent<MeshRenderer>();
+		meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+		Material material = meshRenderer.sharedMaterial = new Material(grassMaterial);
+		material.SetTexture("_GrassMask", overheadCamera.targetTexture);
+		material.SetTextureScale("_GrassMask", new Vector2(1.0f / size.x, 1.0f / size.y));
+	}
+
+	[ContextMenu("Create Overhead Camera")]
+	public void SetupOverheadCamera() 
+	{
+		int textureScale = 2;
+		overheadCamera = new GameObject("Overhead Camera").AddComponent<Camera>();
+		overheadCamera.gameObject.AddComponent<CameraThrottle>();
+		overheadCamera.transform.parent = transform;
+		overheadCamera.transform.localPosition = new Vector3(size.x / 2, 100, size.y / 2);
+		overheadCamera.transform.rotation = Quaternion.Euler(90, 0, 0);
+		overheadCamera.orthographic = true;
+		overheadCamera.orthographicSize = size.x / 2;
+		overheadCamera.nearClipPlane = 0.1f;
+		overheadCamera.farClipPlane = 200;
+		overheadCamera.targetTexture = new RenderTexture(size.x * textureScale, size.y * textureScale, 24);
+		overheadCamera.cullingMask = 1 << LayerMask.NameToLayer("Overhead Camera");
+		overheadCamera.clearFlags = CameraClearFlags.SolidColor;
+		overheadCamera.backgroundColor = Color.white;
+		overheadCamera.enabled = false;
+		overheadCamera.Render();
+		overheadCamera.clearFlags = CameraClearFlags.Nothing;
+	}
+
+	[ContextMenu("Regenerate Decorations")]
+	public void RegenerateDecorations()
+	{		
+		Random.InitState(chunkPosition.x * 2000 + chunkPosition.y - 1000);
+		foreach (Decorations decorations in GetComponents<Decorations>())
+			decorations.Regenerate();
+	}
+
+	[ContextMenu("Regenerate Cliff Decorations")]
+	public void GenerateRocks()
+	{
+		foreach (CliffDecorations cd in GetComponents<CliffDecorations>())
+			cd.GenerateRocks();
 	}
 
 	public bool drawGizmos = false; 
@@ -319,31 +320,31 @@ public class Chunk : AbstractTerrainGenerator
 			{
 				Vector3 position = OnGround(new Vector3(x, 0, y) + ChunkOffset);
 
-				int increment = permanentObstructions[x + y * size.x];
+				int tileType = tiles[x + y * size.x];
 
-				if (increment == CLIFF)
+				if (tileType == CLIFF)
 				{
 					Gizmos.color = Color.red;
 					Gizmos.DrawSphere(position, 0.1f);
 				}
-				else if (increment == WATER)
+				else if (tileType == WATER)
 				{
 					Gizmos.color = Color.blue;
 					Gizmos.DrawSphere(position, 0.1f);
 				}
-				else if (increment == RAMP)
+				else if (tileType == RAMP)
 				{
 					Gizmos.color = Color.green;
 					Gizmos.DrawSphere(position, 0.1f);
 				}
-				else if (increment == BRIDGE)
+				else if (tileType == BRIDGE)
 				{
 					Gizmos.color = Color.yellow;
 					Gizmos.DrawSphere(position, 0.5f);
 				}
-				else
+				//else
 				{
-					Handles.Label(position, increment.ToString());
+					Handles.Label(position, tileType.ToString());
 				}
 			}
 		}

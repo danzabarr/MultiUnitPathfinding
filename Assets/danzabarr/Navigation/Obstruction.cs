@@ -169,7 +169,7 @@ public abstract class AbstractObstructionCollection<Collection> : AbstractObstru
 /// </summary>
 public class Obstruction : AbstractObstruction
 {
-	public Vector2Int position;
+	public Vector2Int offset;
 
 	public override float SignedDistance(Vector2Int position)
 	{
@@ -178,19 +178,21 @@ public class Obstruction : AbstractObstruction
 
 	public override RectInt GetBoundingRectangle()
 	{
-		return new RectInt(position.x, position.y, 1, 1);
+		Vector2Int tile = transform.position.XZ().ToTileCoord() + offset;
+		return new RectInt(tile.x, tile.y, 1, 1);
 	}
 
 	public override bool Contains(Vector2Int position)
 	{
-		return this.position == position;
+		Vector2Int tile = transform.position.XZ().ToTileCoord() + offset;
+		return tile == position;
 	}
 
 	public void OnDrawGizmos()
 	{
 		RectInt rect = GetBoundingRectangle();
-		Vector3 center = new Vector3(rect.x + rect.width / 2, 0, rect.y + rect.height / 2);
-		Vector3 size = new Vector3(rect.width, 1, rect.height);
+		Vector3 center = new Vector3(rect.x + rect.width / 2, 4, rect.y + rect.height / 2);
+		Vector3 size = new Vector3(rect.width, 8, rect.height);
 
 		Gizmos.color = Color.green;
 		Gizmos.DrawWireCube(center, size);

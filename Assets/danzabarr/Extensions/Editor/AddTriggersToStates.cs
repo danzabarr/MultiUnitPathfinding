@@ -9,7 +9,7 @@ public class AddTriggersToStates : MonoBehaviour
 {
     [MenuItem("Tools/Add Triggers to Any State")]
     static void AddTriggers()
-    {
+    {  
         AnimatorController animatorController = Selection.activeObject as AnimatorController;
         foreach (AnimatorControllerLayer layer in animatorController.layers)
         {

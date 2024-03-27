@@ -23,10 +23,10 @@ public class SimpleDialogue : MonoBehaviour
     public void StartDialogue(Agent listener)
     {
         this.listener = listener;
-        listener.agentState = AgentState.Talking;
+        listener.State = BehaviourState.Talking;
         if (speaker != null)
         {
-            speaker.agentState = AgentState.Talking;
+            speaker.State = BehaviourState.Talking;
             speaker.TurnToFace(listener.transform.position);
         }
         listener.TurnToFace(transform.position);
@@ -38,8 +38,8 @@ public class SimpleDialogue : MonoBehaviour
     {
         dialogueBox.Hide();
         cameraController.Follow(listener.transform);
-        listener.agentState = AgentState.Controlled;
+        listener.State = BehaviourState.Controlled;
         if (speaker != null)
-            speaker.agentState = AgentState.Idle;
+            speaker.State = BehaviourState.Idle;
     }
 }

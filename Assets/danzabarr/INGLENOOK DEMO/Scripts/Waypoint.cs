@@ -4,7 +4,7 @@ using UnityEngine;
 /// These can be placed by hand, and attached to moving objects.
 /// Base class of Agents, so an agent is a moving waypoint for other agents.
 /// </summary>
-[ExecuteAlways]
+[ExecuteInEditMode]
 public class Waypoint : MonoBehaviour
 {
     protected Map map;
@@ -16,13 +16,21 @@ public class Waypoint : MonoBehaviour
         get => GroundDistanceFromNode > float.Epsilon || forceUpdate;
         set => forceUpdate = value;
     }
-    private bool forceUpdate = false;
+    private bool forceUpdate = true;
 
     public bool IsOrphaned()
     {
         if (map == null)
             map = FindObjectOfType<Map>();
         return map.NeighbourCount(node) == 0;
+    }
+
+    void Awake()
+    {
+        map = FindObjectOfType<Map>();
+
+        if (map != null)
+            map.UpdateWaypoint(this);
     }
 
     public void OnEnable()
@@ -54,9 +62,16 @@ public class Waypoint : MonoBehaviour
         forceUpdate = false;
     }
 
-    public void OnDrawGizmos()
+    public virtual void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
-        Gizmos.DrawSphere(transform.position, 0.25f);
+        Gizmos.DrawSphere(transform.position, 1f);
+    }
+
+    public virtual void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        foreach (Node neighbour in map.Neighbours(node))
+            Gizmos.DrawLine(node.position, neighbour.position);
     }
 }

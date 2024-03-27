@@ -64,15 +64,8 @@ public class BatchRenderer : MonoBehaviour
 		if (mesh == null)
 			return;
 
-		Graphics.DrawMeshInstanced(mesh, 0, material, matrices);
+		//Graphics.DrawMeshInstanced(mesh, 0, material, matrices);
 		MaterialPropertyBlock properties = new MaterialPropertyBlock();
 		Graphics.DrawMeshInstanced(mesh, 0, material, matrices, matrices.Length, properties, UnityEngine.Rendering.ShadowCastingMode.On, true, layer);
-	}
-
-	private void OnDrawGizmosSelected()
-	{
-		//Gizmos.color = Color.red;
-		//for (int i = 0; i < matrices.Length; i++)
-		//	Handles.PositionHandle(matrices[i].GetColumn(3), matrices[i].rotation);
 	}
 }

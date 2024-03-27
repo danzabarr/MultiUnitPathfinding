@@ -19,24 +19,24 @@ public class CliffDecorations : BatchRenderer
 			for (int y = 0; y < chunk.size.y; y++)
 			{
 				// only place on cliffs or water
-				int type = chunk.GetPermanentObstructionType(x, y);
+				int type = chunk.GetTileType(x, y);
 				if (type != Chunk.CLIFF && type != Chunk.WATER)
 					continue;
 
 				// check not near any ramps
-				int e = chunk.GetPermanentObstructionType(x + 1, y);
+				int e = chunk.GetTileType(x + 1, y);
 				if (e == Chunk.BRIDGE || e == Chunk.RAMP)
 					continue;
 
-				int w = chunk.GetPermanentObstructionType(x - 1, y);
+				int w = chunk.GetTileType(x - 1, y);
 				if (w == Chunk.BRIDGE || w == Chunk.RAMP)
 					continue;
 
-				int n = chunk.GetPermanentObstructionType(x, y + 1);
+				int n = chunk.GetTileType(x, y + 1);
 				if (n == Chunk.BRIDGE || n == Chunk.RAMP)
 					continue;
 
-				int s = chunk.GetPermanentObstructionType(x, y - 1);
+				int s = chunk.GetTileType(x, y - 1);
 				if (s == Chunk.BRIDGE || s == Chunk.RAMP)
 					continue;
 
@@ -55,8 +55,12 @@ public class CliffDecorations : BatchRenderer
 
 					// if normal is too flat, or we're near or below the water, place fewer rocks
 					// this is to avoid placing rocks on nice sandy beaches
-					if (worldUpness < 0.125f || position.y < 0.5f)
-						if (Random.value > 0.75f)
+					if (worldUpness < 0.25f)
+						if (Random.value < 0.5f)
+							continue;
+
+					if (position.y < 0f)
+						if (Random.value < 0.9f)
 							continue;
 
 					Vector3 scale = Random.Range(0.5f, 0.7f) * new Vector3(1, Random.Range(0.25f, 0.5f), 1);

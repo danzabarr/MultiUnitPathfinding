@@ -7,11 +7,13 @@ public class ObstructionArray : AbstractObstruction
 
 	public override RectInt GetBoundingRectangle()
 	{
-		return rect;
+		Vector2Int tile = transform.position.XZ().ToTileCoord() + rect.position;
+		return new RectInt(tile.x, tile.y, rect.width, rect.height);
 	}
 
 	public override bool Contains(Vector2Int position)
 	{
+		RectInt rect = GetBoundingRectangle();
 		position -= new Vector2Int(rect.x, rect.y);
 		if (position.x < 0 || position.y < 0 || position.x >= rect.width || position.y >= rect.height)
 		{

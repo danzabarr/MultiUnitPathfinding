@@ -3,7 +3,6 @@ using UnityEditor;
 using UnityEngine;
 using Color = UnityEngine.Color;
 
-
 public class Map : MapGeneratorBase
 {
 	[Header("Mouse")]
@@ -44,37 +43,10 @@ public class Map : MapGeneratorBase
 			mouseArea = GetArea(mouseTile.x, mouseTile.y);
 		}
 	}
-
-	public void SetPath(Agent agent, Node node)
-	{
-		agent.SetPath(AStar(agent.transform.position, node.position));
-	}
-
-	public void SetPath(Agent agent, Vector3 goal)
-	{
-		agent.SetPath(AStar(agent.transform.position, goal));
-	}
-
-	void DrawPath(List<Node> nodes)
-	{
-		for (int i = 1; i < nodes.Count; i++)
-		{
-			Gizmos.DrawLine(nodes[i - 1].position, nodes[i].position);
-			Gizmos.DrawSphere(nodes[i].position, 0.5f);
-		}
-	}
-
+	
 #if UNITY_EDITOR
 	void OnDrawGizmos()
 	{
-		Gizmos.color = Color.red;
-		foreach (Waypoint waypoint in FindObjectsOfType<Waypoint>())
-		{
-			Node node = waypoint.Node;
-			foreach (Node neighbour in Neighbours(node))
-				Gizmos.DrawLine(node.position, neighbour.position);
-		}
-
 		if (drawCliffs)
 		{
 			Gizmos.color = Color.red;
@@ -182,7 +154,7 @@ public class Map : MapGeneratorBase
 			foreach (Ramp ramp in ramps)
 			{
 				Vector2Int start = ramp.position;
-				Vector2Int end = start + ramp.length * (ramp.orientation == Orientation.HORIZONTAL ? Vector2Int.right : Vector2Int.up);
+				Vector2Int end = start + ramp.width * (ramp.orientation == Orientation.HORIZONTAL ? Vector2Int.right : Vector2Int.up);
 			
 				Gizmos.DrawWireSphere(start.X0Y(), 0.25f);
 				Gizmos.DrawWireSphere(end.X0Y(), 0.25f);
@@ -192,7 +164,7 @@ public class Map : MapGeneratorBase
 				Gizmos.DrawLine(p00, p01);
 
 
-				if (ramp.length > 0)
+				if (ramp.width > 0)
 				{
 					Vector3 p10 = ramp.n10.position;
 					Vector3 p11 = ramp.n11.position;
@@ -201,7 +173,7 @@ public class Map : MapGeneratorBase
 					Gizmos.DrawLine(p01, p11);
 				}
 
-				Handles.Label((p00 + p01) / 2.0f, ramp.length + "");
+				Handles.Label((p00 + p01) / 2.0f, ramp.width + "");
 				//Vector3 p10 = ramp.n10.position;
 				//Vector3 p11 = ramp.n11.position;
 				//Gizmos.DrawLine(p10, p11);

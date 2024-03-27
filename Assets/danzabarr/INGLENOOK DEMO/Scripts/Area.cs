@@ -17,8 +17,6 @@ public class Area
 	[SerializeField] private List<Ramp> ramps;
 
 	[SerializeField] private SerializableDictionary<(Ramp, Ramp), List<Node>> interconnections;
-	// List or ramp to ramp interconnections
-	// This could be used for saving longer paths
 
 	public Area(int increment, ICollection<Vector2Int> tiles)
 	{

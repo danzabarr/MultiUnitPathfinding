@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-[ExecuteInEditMode]
 public class DialogueBox : MonoBehaviour
 {
     /// <summary>
@@ -49,7 +48,12 @@ public class DialogueBox : MonoBehaviour
     /// </summary>
     [SerializeField] Coroutine routine;
     
+    /// <summary>
+    /// The action to call when the dialogue box is finished displaying all of the text.
+    /// </summary>
     internal Action onFinish;
+
+    public bool hideOnStart = true;
 
     /// <summary>
     /// A buffer of text, which will be split into pages.
@@ -129,9 +133,8 @@ public class DialogueBox : MonoBehaviour
     /// <param name="text"></param>
     public void Show(string text, Action onFinish = null)
     {
-        this.onFinish = onFinish;
-        DisplayedText = "";
         Buffer = text;
+        this.onFinish = onFinish;
         gameObject.SetActive(true);
         Continue();
     }
@@ -140,7 +143,13 @@ public class DialogueBox : MonoBehaviour
 
     void OnValidate() => Reset();
     
-    void Start() => Reset();
+    void Start() 
+    {
+        if (hideOnStart)
+            gameObject.SetActive(false);
+
+        Reset();
+    }
 
     void Update()
     {
@@ -172,13 +181,17 @@ public class DialogueBox : MonoBehaviour
     [ContextMenu("Continue")]
     public void Continue()
     {
+        if (gameObject.activeSelf == false)
+            return;
+
         // If we're currently displaying text, stop the coroutine.
         if (routine != null) 
             StopCoroutine(routine);
+
         routine = null;
         
         // If we were printing, display the rest of the text.
-        if (page != null)
+        if (!string.IsNullOrEmpty(page))
         {
             DisplayedText = page;
             Prompting = true;
@@ -197,13 +210,12 @@ public class DialogueBox : MonoBehaviour
                 routine = StartCoroutine(FillDisplay(0.1f));
                 return; // and skip page = null
             }
-        }
 
-        // If we're out of pages, hide the dialogue box.
-        page = null;
-        if (pages.Count == 0)
-            Complete = true;
-        
+            // If we're out of pages, hide the dialogue box.
+            page = null;
+            if (pages.Count == 0)
+                Complete = true;
+        }
     }
 
     /// <summary>
@@ -215,6 +227,7 @@ public class DialogueBox : MonoBehaviour
         pages.Clear();
         page = null;
         Prompting = false;
+        DisplayedText = "";
         
         if (string.IsNullOrEmpty(Buffer))
             return;
