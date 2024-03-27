@@ -395,10 +395,9 @@ public class Agent : Waypoint//, IAgent<Node>
 		// Interact with SimpleDialogue components if they are in range
 		if (Input.GetButtonDown("Fire1"))
 		{
-			Debug.DrawRay(transform.position, transform.forward * 2, Color.red, 2);
 			if
 			(
-				Physics.SphereCast(transform.position, 0.5f, transform.forward, out RaycastHit hit, 2) &&
+				Physics.SphereCast(transform.position + Vector3.up - transform.forward * 0.25f, 1f, transform.forward, out RaycastHit hit, 2) &&
 				hit.collider.TryGetComponent<SimpleDialogue>(out var dialogue)
 			)
 				dialogue.StartDialogue(this);

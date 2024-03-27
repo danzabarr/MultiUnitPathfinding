@@ -211,11 +211,13 @@ public class DialogueBox : MonoBehaviour
                 return; // and skip page = null
             }
 
-            // If we're out of pages, hide the dialogue box.
-            page = null;
+            
             if (pages.Count == 0)
                 Complete = true;
         }
+
+        // If we're out of pages, hide the dialogue box.
+            page = null;
     }
 
     /// <summary>
