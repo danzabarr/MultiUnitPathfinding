@@ -235,10 +235,7 @@ public abstract class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidat
 			return null;
 		}
 
-		
-
 		List<Bridge> tentativeBridges = new List<Bridge>();
-		
 		foreach (Chunk chunk in chunks.Values)
 		{
 			foreach (Vector2Int tile in chunk.Tiles)
@@ -265,7 +262,6 @@ public abstract class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidat
 			// we prefer shorter bridges
 
 			Dictionary<Vector2Int, Bridge> dict = new Dictionary<Vector2Int, Bridge>();
-			
 			Vector2Int Ordered(int a1, int a2) => a1 < a2 ? new Vector2Int(a1, a2) : new Vector2Int(a2, a1);
 
 			bool Add(Bridge bridge)
@@ -342,9 +338,7 @@ public abstract class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidat
 				Vector2Int chunkCoord = bridgeTile.ToChunkCoord(chunkSize);
 				Vector2Int localPosition = bridgeTile - chunkCoord * chunkSize;
 				if (TryGetChunk(chunkCoord, out Chunk chunk))
-				{
 					AddUpdate(chunk, localPosition, height);
-				}
 
 				// Also need to update the neighbour if the local position is on the edge.
 
@@ -388,8 +382,6 @@ public abstract class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidat
 				chunk.UpdateVertices(list);
 		}
 
-		
-
 		List<Bridge> selection = SelectBridges(tentativeBridges);
 		foreach (Bridge bridge in selection)
 			AddBridge(bridge);
@@ -404,7 +396,6 @@ public abstract class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidat
 	void IdentifyRamps()
 	{
 		ramps.Clear();
-
 		HashSet<Vector2Int> sites = new HashSet<Vector2Int>();
 
 		void Helper(Orientation orientation)
@@ -471,7 +462,6 @@ public abstract class MapGeneratorBase : MonoBehaviour, IGraph<Node>, IOnValidat
 
 		Helper(Orientation.HORIZONTAL);
 		Helper(Orientation.VERTICAL);
-
 
 		// Raises or lowers the vertices of the terrain mesh to create a smooth gradient under a ramp.
 

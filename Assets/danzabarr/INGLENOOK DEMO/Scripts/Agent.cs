@@ -315,7 +315,7 @@ public class Agent : Waypoint//, IAgent<Node>
 					TurnToFace(agent.transform.position);
 					
 				// otherwise align rotation with the waypoint orientation
-				else
+				else if (agentGoal != null)
 					transform.forward = agentGoal.transform.forward.XZ().X0Y();
 
 				State = BehaviourState.Idle;
